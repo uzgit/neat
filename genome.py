@@ -12,9 +12,11 @@ class NodeGene:
         self.is_input_node= is_input_node
         self.is_output_node = is_output_node
 
+        self.fitness = None
+
     def __str__(self):
 
-        representation = "node {}({}): {}, {}".format(self.identifier, self.layer, self.aggregation_function, self.activation_function)
+        representation = "node {}: {}, {}".format(self.identifier, self.aggregation_function, self.activation_function)
 
         if self.is_input_node:
             representation += " (input)"
@@ -117,14 +119,20 @@ class Genome:
 
     def mutate_reset_weight(self, initial_weight_min, initial_weight_max):
 
-        reset_edge = choice([edge for edge in self.edges])
         new_weight = uniform(initial_weight_min, initial_weight_max)
+
+        reset_edge = choice([edge for edge in self.edges])
         reset_edge.weight = new_weight
 
-    def mutate_scale_weight(self, weight_min, weight_max):
+    def mutate_scale_weight(self, scale_min, scale_max, weight_min, weight_max):
 
         mutated_edge = choice([edge for edge in self.edges])
-        mutated_edge.weight *= uniform(weight_min, weight_max)
+
+        new_weight = mutated_edge.weight * uniform(scale_min, scale_max)
+        new_weight = max(weight_min, new_weight)
+        new_weight = min(weight_max, new_weight)
+
+        mutated_edge.weight = new_weight
 
     def mutate_change_aggregation_function(self):
 
