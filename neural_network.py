@@ -1,5 +1,19 @@
 from genome import *
 
+# for visualization purposes only
+class Edge:
+
+    def __init__(self, input_node_identifier, output_node_identifier, weight):
+        self.input_node_identifier = input_node_identifier
+        self.output_node_identifier = output_node_identifier
+        self.weight = weight
+
+    def __str__(self):
+        return "edge {}->{}, {}".format(self.input_node_identifier, self.output_node_identifier, self.weight)
+
+    def str(self):
+        return self.__str__()
+
 class Node:
 
     def __init__(self, identifier, aggregation_function, activation_function, layer=-1, outputs=[], is_input_node=False, is_output_node=False):
@@ -52,7 +66,6 @@ class Node:
         representation = "Node {} (layer {}), aggregation: {}, activation: {}, output links: ".format(self.identifier, self.layer, self.aggregation_function, self.activation_function)
         for node, weight in self.outputs:
             representation += "[node {} : weight {}]".format(node.identifier, weight)
-        #representation += ["[node {} : weight {}]".format(node.identifier, weight) for node, weight in self.outputs]
         return representation
 
 
@@ -68,6 +81,7 @@ class FeedForwardNeuralNetwork:
         self.identifier = genome.identifier
 
         self.nodes = []
+        self.edges = []
 
         self.generate_nodes()
 
@@ -120,6 +134,7 @@ class FeedForwardNeuralNetwork:
                         next_node_stack.append(next_node)
 
                     current_node.outputs.append([next_node, current_edge.weight])
+                    self.edges.append(Edge(current_node.identifier, next_node.identifier, current_edge.weight))
 
             # replace node_stack with next_node_stack
             node_stack = [] + next_node_stack
@@ -164,6 +179,9 @@ class FeedForwardNeuralNetwork:
         representation += "\n\tOutput node(s):"
         for node in self.output_nodes:
             representation += "\n\t\t" + str(node)
+
+        # for edge in self.edges:
+        #     representation += "\n\t{}".format(str(edge))
 
         return representation
 

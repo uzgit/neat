@@ -47,18 +47,22 @@ print(neural_network1)
 print()
 
 #genome1.mutate_remove_node()
-genome1.mutate_add_node(20, 21, 22)
+genome1.mutate_add_node(9, 21, 22)
 genome1.mutate_add_node(23, 24, 25)
 genome1.mutate_add_node(26, 27, 28)
-#genome1.mutate_reset_weight(-2, 2)
+genome1.mutate_reset_weight(-2, 2)
 #genome1.mutate_scale_weight(500, 500, -50, 50)
 #genome1.mutate_change_aggregation_function()
 #genome1.mutate_change_activation_function()
 
+
+
 neural_network2 = FeedForwardNeuralNetwork(genome1)
-print(neural_network2)
+print(neural_network1)
 
 print( neural_network1.activate([0, 1, 1]), neural_network2.activate([0, 1, 1]) )
 print( neural_network1.activate([0, 2, 2]), neural_network2.activate([0, 2, 2]) )
 
-draw_neural_network(neural_network1)
+print(genome1)
+
+draw_neural_network(neural_network2)
