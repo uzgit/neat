@@ -1,7 +1,6 @@
 import graphviz
-# import matplotlib.pyplot as plt
 
-def draw_neural_network(network):
+def draw_neural_network(network, filename=None):
 
     input_node_attributes = \
     {
@@ -63,4 +62,4 @@ def draw_neural_network(network):
     graph.subgraph(hidden_node_subgraph)
     graph.subgraph(output_node_subgraph)
 
-    graph.render(view=True)
+    graph.render(view=True, filename=filename)
