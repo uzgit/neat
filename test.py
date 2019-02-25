@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from genome import *
 from neural_network import *
 from visualize import draw_neural_network
