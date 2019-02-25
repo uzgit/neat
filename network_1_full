@@ -1,16 +1,10 @@
 digraph {
-	1 -> 2 [color=black label=2.00 style=dotted]
-	4 -> 2 [color=black label=1.00 style=dotted]
+	1 -> 2 [color=black label=2.00 style=solid]
+	4 -> 2 [color=black label=1.00 style=solid]
 	8 -> 2 [color=black label=1.00 style=solid]
 	1 -> 5 [color=black label=2.00 style=solid]
 	5 -> 2 [color=black label=2.00 style=solid]
 	4 -> 7 [color=black label=2.00 style=solid]
-	4 -> 9 [color=black label=1.00 style=solid]
-	9 -> 2 [color=black label=1.00 style=dotted]
-	1 -> 23 [color=black label=1.00 style=solid]
-	23 -> 2 [color=black label=2.00 style=solid]
-	9 -> 26 [color=black label=1.00 style=solid]
-	26 -> 2 [color=black label=0.66 style=solid]
 	subgraph "input nodes" {
 		graph [rank=min]
 		1 [color=red fontsize=12 height=0.2 shape=circle width=0.2]
@@ -19,9 +13,6 @@ digraph {
 	}
 	subgraph "hidden nodes" {
 		5 [fontsize=12 height=0.2 shape=circle width=0.2]
-		9 [fontsize=12 height=0.2 shape=circle width=0.2]
-		23 [fontsize=12 height=0.2 shape=circle width=0.2]
-		26 [fontsize=12 height=0.2 shape=circle width=0.2]
 	}
 	subgraph "output nodes" {
 		graph [rank=max]
