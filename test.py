@@ -65,6 +65,9 @@ print( neural_network1.activate([0, 2, 2]), neural_network2.activate([0, 2, 2]) 
 
 print(genome1)
 
-draw_neural_network(neural_network1, "network 1")
-draw_neural_network(neural_network2, "network 2")
+#draw_neural_network(neural_network1, "network 1")
+#draw_neural_network(neural_network2, "network 2")
 
+genome2 = Genome.default(2, 5, 2, num_hidden_nodes=10, mode="full")
+network3 = FeedForwardNeuralNetwork(genome2)
+draw_neural_network(network3)

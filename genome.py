@@ -80,6 +80,62 @@ class Genome:
         self.num_inputs  = len([node for node in self.nodes if node.is_input_node])
         self.num_outputs = len([node for node in self.nodes if node.is_output_node])
 
+    @classmethod
+    def default(cls, identifier, num_inputs, num_outputs, aggregation_function="sum", activation_function="sigmoid", output_activation_function="sigmoid", num_hidden_nodes=0, mode="unconnected", weights="randomized"):
+
+        cls.identifier = identifier
+        cls.num_inputs = num_inputs
+        cls.num_outputs = num_outputs
+
+        cls.nodes = []
+        cls.edges = []
+
+        node_identifier = 1
+        for i in range(1, num_inputs + 1):
+            cls.nodes.append(NodeGene(node_identifier, aggregation_function="sum", activation_function="identity", is_input_node=True))
+            node_identifier += 1
+
+        for i in range(1, num_hidden_nodes + 1):
+            cls.nodes.append(NodeGene(node_identifier, aggregation_function=aggregation_function, activation_function=activation_function))
+            node_identifier += 1
+
+        for i in range(1, num_outputs + 1):
+            cls.nodes.append(NodeGene(node_identifier, aggregation_function=aggregation_function, activation_function=output_activation_function, is_output_node=True))
+            node_identifier += 1
+
+        if mode == "full":
+
+            input_nodes  = [node for node in cls.nodes if node.is_input_node]
+            hidden_nodes = [node for node in cls.nodes if not node.is_input_node and not node.is_output_node]
+            output_nodes = [node for node in cls.nodes if node.is_output_node]
+
+            edge_identifier = 1
+            innovation_number = 1
+            for input_node in input_nodes:
+                for hidden_node in hidden_nodes:
+
+                    if weights == "randomized":
+                        weight = uniform(-2, 2)
+                    else:
+                        weight = 1
+
+                    cls.edges.append(EdgeGene(edge_identifier, innovation_number, input_node.identifier, hidden_node.identifier, weight))
+
+                    edge_identifier   += 1
+                    innovation_number += 1
+
+            for hidden_node in hidden_nodes:
+                for output_node in output_nodes:
+
+                    if weights == "randomized":
+                        weight = uniform(-2, 2)
+                    else:
+                        weight = 1
+
+                    cls.edges.append(EdgeGene(edge_identifier, innovation_number, hidden_node.identifier, output_node.identifier, weight))
+
+        return cls
+
     def mutate_add_node(self, new_node_identifier, innovation_number_1, innovation_number_2, mode=None, new_node_aggregation_function="sum", new_node_activation_function="sigmoid"):
 
         active_edges = [edge for edge in self.edges if edge.is_enabled]
