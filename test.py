@@ -41,29 +41,35 @@ genome1 = Genome(1, nodes, edges)
 
 neural_network1 = FeedForwardNeuralNetwork(genome1)
 
-print(genome1)
+#print(genome1)
 
-print(neural_network1)
-print()
+# print(neural_network1)
+# print()
 
-#genome1.mutate_remove_node()
+genome1.mutate_remove_node()
 genome1.mutate_add_node(9, 21, 22)
 genome1.mutate_add_node(23, 24, 25)
 genome1.mutate_add_node(26, 27, 28)
 genome1.mutate_reset_weight()
 genome1.mutate_scale_weight()
+for i in range(10):
+    genome1.mutate_add_edge(66, weight=23.795 - i)
+genome1.mutate_remove_edge(5)
 genome1.mutate_change_aggregation_function()
 genome1.mutate_change_activation_function()
 
 
 
 neural_network2 = FeedForwardNeuralNetwork(genome1)
-print(neural_network1)
+#print(neural_network1)
 
-print( neural_network1.activate([0, 1, 1]), neural_network2.activate([0, 1, 1]) )
-print( neural_network1.activate([0, 2, 2]), neural_network2.activate([0, 2, 2]) )
+#print( neural_network1.activate([0, 1, 1]), neural_network2.activate([0, 1, 1]) )
+#print( neural_network1.activate([0, 2, 2]), neural_network2.activate([0, 2, 2]) )
 
-print(genome1)
+print(neural_network2.genome)
+print(neural_network2)
+for edge in [str(edge) for edge in neural_network2.edges]:
+    print(edge)
 
 draw_neural_network_active(neural_network2, "images/network_2_active")
 draw_neural_network_full(  neural_network2, "images/network_2_full")

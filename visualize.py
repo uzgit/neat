@@ -49,7 +49,8 @@ def draw_neural_network_active(network, filename=None):
         output_node_subgraph.node(str(output_node.identifier), _attributes=output_node_attributes)
 
     # draw enabled edges
-    for edge in network.edges:
+    #for edge in [edge for edge in network.genome.edges if edge.is_enabled]:
+    for edge in [edge for edge in network.edges]:
 
         style = "solid"
         color = "black" if edge.weight > 0 else "red"

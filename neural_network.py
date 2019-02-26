@@ -109,6 +109,7 @@ class FeedForwardNeuralNetwork:
             self.nodes.append(new_input_node)
 
         # generate output_nodes
+        processed_nodes = []
         layer_number = 1
         while(len(node_stack) > 0):
 
@@ -118,6 +119,11 @@ class FeedForwardNeuralNetwork:
                 current_node.layer = layer_number
 
                 current_node_edges = [edge for edge in self.genome.edges if edge.input_node_identifier == current_node.identifier and edge.is_enabled]
+
+                print(current_node.identifier)
+                print([edge.output_node_identifier for edge in current_node_edges])
+                print()
+
                 for current_edge in current_node_edges:
 
                     next_node_gene = [node for node in self.genome.nodes if node.identifier == current_edge.output_node_identifier][0]
@@ -132,10 +138,14 @@ class FeedForwardNeuralNetwork:
                     if next_node not in next_node_stack:
                         next_node_stack.append(next_node)
 
-                    current_node.outputs.append([next_node, current_edge.weight])
-                    self.edges.append(Edge(current_node.identifier, next_node.identifier, current_edge.weight))
+                    # don't set a node's outputs more than once
+                    if current_node not in processed_nodes:
+                        print("added", next_node.identifier)
+                        current_node.outputs.append([next_node, current_edge.weight])
+                        self.edges.append(Edge(current_node.identifier, next_node.identifier, current_edge.weight))
 
             # replace node_stack with next_node_stack
+            processed_nodes += node_stack
             node_stack = [] + next_node_stack
 
             layer_number += 1

@@ -178,13 +178,102 @@ class Genome:
 
         # remove the relevant node
         self.nodes.remove(removed_node)
-        print(removed_node.identifier)
 
         # get all the enabled edges that use the removed node as input or output
         removed_edges = [edge for edge in self.edges if edge.is_enabled and (edge.input_node_identifier == removed_node.identifier or edge.output_node_identifier == removed_node.identifier)]
         # disable the relevant edges
         for edge in removed_edges:
             edge.is_enabled = False
+
+    def mutate_add_edge(self, new_edge_identifier, input_node_identifier=None, output_node_identifier=None, weight=None, weight_min=global_weight_min, weight_max=global_weight_max):
+
+        new_edge = False
+
+        # for scope
+        input_node  = None
+        output_node = None
+
+        if input_node_identifier == None:
+
+            possible_input_nodes = [node for node in self.nodes if not node.is_output_node]
+            shuffle(possible_input_nodes)
+
+            found_edge = False
+            i = 0
+            while i < len(possible_input_nodes) and found_edge == False:
+
+                predecessors = []
+
+                possible_output_node = None
+
+                # get the edges leading into the possible input node
+                possible_input_node = possible_input_nodes[i]
+                input_edge_stack = [edge for edge in self.edges if edge.output_node_identifier == possible_input_node.identifier]
+                while(len(input_edge_stack) > 0):
+                    new_input_edge_stack = []
+                    for input_edge in input_edge_stack:
+
+                        predecessor = [node for node in self.nodes if node.identifier == input_edge.input_node_identifier][0]
+                        predecessors.append(predecessor)
+
+                        new_input_edge_stack += [edge for edge in self.edges if edge.output_node_identifier == predecessor.identifier]
+
+                    input_edge_stack = [] + new_input_edge_stack
+
+                possible_output_nodes = [node for node in self.nodes if node not in predecessors and not node.is_input_node and node.identifier != possible_input_node.identifier]
+                shuffle(possible_output_nodes)
+
+                found_output_node = False
+                ii = 0
+                while ii < len(possible_output_nodes) and found_output_node == False:
+
+                    possible_output_node = possible_output_nodes[ii]
+
+                    # check for duplicates
+                    if len([edge for edge in self.edges if edge.input_node_identifier != possible_input_node.identifier and edge.output_node_identifier != possible_output_node.identifier]) == 0:
+                        output_node = possible_output_node
+                        found_output_node = True
+
+                    ii += 1
+
+                if possible_input_node is not None and possible_output_node is not None:
+
+                    input_node = possible_input_node
+                    output_node = possible_output_node
+
+                    found_edge = True
+
+                i += 1
+
+        else:
+            input_node  = [node for node in self.nodes if node.identifier == input_node_identifier][0]
+            output_node = [node for node in self.nodes if node.identifier == output_node_identifier][0]
+
+        if weight == None:
+            weight = uniform(weight_min, weight_max)
+
+        # check if the edge already exists and is enabled
+        edge_exists_already = any([edge.input_node_identifier == input_node.identifier and edge.output_node_identifier == output_node.identifier for edge in self.edges])
+        if edge_exists_already:
+            new_edge = None
+        else:
+            new_edge = EdgeGene(new_edge_identifier, None, input_node.identifier, output_node.identifier, weight)
+
+        if new_edge is not None:
+            self.edges.append(new_edge)
+
+        return new_edge
+
+    def mutate_remove_edge(self, removed_edge_identifier=None):
+
+        if removed_edge_identifier is not None:
+            removed_edge = [edge for edge in self.edges if edge.identifier == removed_edge_identifier][0]
+        else:
+            removed_edge = choice(self.edges)
+
+        removed_edge.is_enabled = False
+
+        return removed_edge
 
     def mutate_reset_weight(self, reset_edge_identifier=None, weight_minimum=initial_weight_min, weight_maximum=initial_weight_max):
 

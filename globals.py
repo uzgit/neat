@@ -27,5 +27,11 @@ node_gene_coefficient = 0.6
 edge_gene_coefficient = 0.9
 edge_weight_coefficient = 0.2
 
+# variables for mutating genomes
+add_node_probability = 0.2
+remove_node_probability = 0.05
+add_edge_probability = 0.6
+remove_edge_probably = 0.4
+
 # variables for Populations
 default_population_size = 150
