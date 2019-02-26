@@ -22,6 +22,8 @@ class NodeGene:
 
         representation = "node {}: {}, {}".format(self.identifier, self.aggregation_function, self.activation_function)
 
+        if not self.is_enabled:
+            representation += " (disabled) "
         if self.is_input_node:
             representation += " (input)"
         elif self.is_output_node:
@@ -174,16 +176,15 @@ class Genome:
 
         if removed_node_identifier == None:
             # choose a random node to remove
-            removed_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node])
+            removed_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled])
         else:
-            removed_node = [node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.identifier == removed_node_identifier][0]
+            removed_node = [node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled and node.identifier == removed_node_identifier][0]
 
-        # remove the relevant node
-        self.nodes.remove(removed_node)
+        # disable the relevant node
+        removed_node.is_enabled = False
 
-        # get all the enabled edges that use the removed node as input or output
+        # get all the enabled edges that use the removed node as input or output and disable them
         removed_edges = [edge for edge in self.edges if edge.is_enabled and (edge.input_node_identifier == removed_node.identifier or edge.output_node_identifier == removed_node.identifier)]
-        # disable the relevant edges
         for edge in removed_edges:
             edge.is_enabled = False
 
@@ -197,7 +198,7 @@ class Genome:
 
         if input_node_identifier == None:
 
-            possible_input_nodes = [node for node in self.nodes if not node.is_output_node]
+            possible_input_nodes = [node for node in self.nodes if not node.is_output_node and node.is_enabled]
             shuffle(possible_input_nodes)
 
             found_edge = False
@@ -215,14 +216,16 @@ class Genome:
                     new_input_edge_stack = []
                     for input_edge in input_edge_stack:
 
-                        predecessor = [node for node in self.nodes if node.identifier == input_edge.input_node_identifier][0]
-                        predecessors.append(predecessor)
+                        local_input_nodes = [node for node in self.nodes if node.identifier == input_edge.input_node_identifier and node.is_enabled]
+                        if len(local_input_nodes) > 0:
+                            predecessor = local_input_nodes[0]
+                            predecessors.append(predecessor)
 
-                        new_input_edge_stack += [edge for edge in self.edges if edge.output_node_identifier == predecessor.identifier]
+                            new_input_edge_stack += [edge for edge in self.edges if edge.output_node_identifier == predecessor.identifier]
 
                     input_edge_stack = [] + new_input_edge_stack
 
-                possible_output_nodes = [node for node in self.nodes if node not in predecessors and not node.is_input_node and node.identifier != possible_input_node.identifier]
+                possible_output_nodes = [node for node in self.nodes if node not in predecessors and not node.is_input_node and node.is_enabled and node.identifier != possible_input_node.identifier]
                 shuffle(possible_output_nodes)
 
                 found_output_node = False
@@ -248,8 +251,8 @@ class Genome:
                 i += 1
 
         else:
-            input_node  = [node for node in self.nodes if node.identifier == input_node_identifier][0]
-            output_node = [node for node in self.nodes if node.identifier == output_node_identifier][0]
+            input_node  = [node for node in self.nodes if node.is_enabled and node.identifier == input_node_identifier][0]
+            output_node = [node for node in self.nodes if node.is_enabled and node.identifier == output_node_identifier][0]
 
         if weight == None:
             weight = uniform(weight_min, weight_max)
@@ -304,9 +307,9 @@ class Genome:
     def mutate_change_aggregation_function(self, mutated_node_identifier=None):
 
         if mutated_node_identifier == None:
-            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node])
+            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled])
         else:
-            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.identifier == mutated_node_identifier][0])
+            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled and node.identifier == mutated_node_identifier][0])
 
         new_aggregation_function = choice(aggregation_function_names)
         mutated_node.aggregation_function = new_aggregation_function
@@ -314,9 +317,9 @@ class Genome:
     def mutate_change_activation_function(self, mutated_node_identifier=None):
 
         if mutated_node_identifier == None:
-            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node])
+            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled])
         else:
-            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.identifier == mutated_node_identifier][0])
+            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled and node.identifier == mutated_node_identifier][0])
 
         new_activation_function = choice(activation_function_names)
         mutated_node.activation_function = new_activation_function
