@@ -50,10 +50,10 @@ print()
 genome1.mutate_add_node(9, 21, 22)
 genome1.mutate_add_node(23, 24, 25)
 genome1.mutate_add_node(26, 27, 28)
-genome1.mutate_reset_weight(-2, 2)
-#genome1.mutate_scale_weight(500, 500, -50, 50)
-#genome1.mutate_change_aggregation_function()
-#genome1.mutate_change_activation_function()
+genome1.mutate_reset_weight()
+genome1.mutate_scale_weight()
+genome1.mutate_change_aggregation_function()
+genome1.mutate_change_activation_function()
 
 
 
@@ -65,8 +65,8 @@ print( neural_network1.activate([0, 2, 2]), neural_network2.activate([0, 2, 2]) 
 
 print(genome1)
 
-# draw_neural_network_active(neural_network2, "images/network_2_active")
-# draw_neural_network_full(  neural_network2, "images/network_2_full")
+draw_neural_network_active(neural_network2, "images/network_2_active")
+draw_neural_network_full(  neural_network2, "images/network_2_full")
 # draw_neural_network_active(neural_network2, "images/network 2")
 
 # genome2 = Genome.default(2, 5, 2, num_hidden_nodes=10, mode="full")
