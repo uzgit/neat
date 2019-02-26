@@ -68,8 +68,6 @@ neural_network2 = FeedForwardNeuralNetwork(genome1)
 
 print(neural_network2.genome)
 print(neural_network2)
-for edge in [str(edge) for edge in neural_network2.edges]:
-    print(edge)
 
 draw_neural_network_active(neural_network2, "images/network_2_active")
 draw_neural_network_full(  neural_network2, "images/network_2_full")

@@ -16,13 +16,18 @@ class Edge:
 
 class Node:
 
-    def __init__(self, identifier, aggregation_function, activation_function, layer=-1, outputs=[], is_input_node=False, is_output_node=False):
+    def __init__(self, identifier, aggregation_function, activation_function, layer=-1, outputs=None, is_input_node=False, is_output_node=False):
 
         self.identifier = identifier
         self.aggregation_function = aggregation_function
         self.activation_function = activation_function
         self.layer = layer
-        self.outputs = deepcopy(outputs)
+
+        if outputs == None:
+            self.outputs = []
+        else:
+            self.outputs = deepcopy(outputs)
+
         self.is_input_node = is_input_node
         self.is_output_node = is_output_node
 
@@ -64,8 +69,13 @@ class Node:
     def __str__(self):
 
         representation = "Node {} (layer {}), aggregation: {}, activation: {}, output links: ".format(self.identifier, self.layer, self.aggregation_function, self.activation_function)
-        for node, weight in self.outputs:
-            representation += "[node {} : weight {}]".format(node.identifier, weight)
+
+        if len(self.outputs) == 0:
+            representation += "[]"
+        else:
+            for node, weight in self.outputs:
+                representation += "[node {} : weight {}]".format(node.identifier, weight)
+
         return representation
 
 
@@ -120,10 +130,6 @@ class FeedForwardNeuralNetwork:
 
                 current_node_edges = [edge for edge in self.genome.edges if edge.input_node_identifier == current_node.identifier and edge.is_enabled]
 
-                print(current_node.identifier)
-                print([edge.output_node_identifier for edge in current_node_edges])
-                print()
-
                 for current_edge in current_node_edges:
 
                     next_node_gene = [node for node in self.genome.nodes if node.identifier == current_edge.output_node_identifier][0]
@@ -140,7 +146,6 @@ class FeedForwardNeuralNetwork:
 
                     # don't set a node's outputs more than once
                     if current_node not in processed_nodes:
-                        print("added", next_node.identifier)
                         current_node.outputs.append([next_node, current_edge.weight])
                         self.edges.append(Edge(current_node.identifier, next_node.identifier, current_edge.weight))
 
@@ -182,11 +187,11 @@ class FeedForwardNeuralNetwork:
 
         if self.num_hidden_nodes > 0:
             representation += "\n\tHidden node(s):"
-            for node in self.hidden_nodes:
+            for node in sorted(self.hidden_nodes, key=lambda node: node.layer):
                 representation += "\n\t\t" + str(node)
 
         representation += "\n\tOutput node(s):"
-        for node in self.output_nodes:
+        for node in sorted(self.output_nodes, key=lambda node: node.layer):
             representation += "\n\t\t" + str(node)
 
         # for edge in self.edges:

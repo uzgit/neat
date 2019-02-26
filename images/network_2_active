@@ -1,31 +1,37 @@
 digraph {
-	1 -> 26 [color=black label=1.00 style=solid]
-	1 -> 7 [color=black label=17.80 style=solid]
-	4 -> 2 [color=black label=1.06 style=solid]
-	4 -> 23 [color=black label=1.00 style=solid]
-	8 -> 2 [color=black label=1.00 style=solid]
-	8 -> 23 [color=black label=21.80 style=solid]
-	8 -> 26 [color=black label=18.80 style=solid]
-	26 -> 9 [color=black label=1.00 style=solid]
-	26 -> 7 [color=black label=15.80 style=solid]
-	23 -> 7 [color=black label=2.00 style=solid]
-	9 -> 2 [color=black label=2.00 style=solid]
-	9 -> 23 [color=black label=22.80 style=solid]
-	9 -> 7 [color=black label=20.80 style=solid]
+	1 -> 9 [color=black fontsize=12 label=1.00 style=solid]
+	1 -> 23 [color=black fontsize=12 label=20.80 style=solid]
+	4 -> 7 [color=black fontsize=12 label=2.00 style=solid]
+	4 -> 26 [color=red fontsize=12 label=-0.58 style=solid]
+	8 -> 2 [color=black fontsize=12 label=1.00 style=solid]
+	8 -> 7 [color=black fontsize=12 label=21.80 style=solid]
+	9 -> 23 [color=black fontsize=12 label=1.00 style=solid]
+	23 -> 2 [color=black fontsize=12 label=2.00 style=solid]
+	26 -> 2 [color=black fontsize=12 label=4.51 style=solid]
+	26 -> 9 [color=black fontsize=12 label=23.80 style=solid]
+	26 -> 7 [color=black fontsize=12 label=16.80 style=solid]
 	subgraph "input nodes" {
 		graph [rank=min]
-		1 [color=red fontsize=12 height=0.2 shape=circle width=0.2]
-		4 [color=red fontsize=12 height=0.2 shape=circle width=0.2]
-		8 [color=red fontsize=12 height=0.2 shape=circle width=0.2]
+		1 [label="sum
+identity" xlabel=1 color=red fontsize=12 height=0.5 shape=circle width=0.5]
+		4 [label="sum
+identity" xlabel=4 color=red fontsize=12 height=0.5 shape=circle width=0.5]
+		8 [label="sum
+identity" xlabel=8 color=red fontsize=12 height=0.5 shape=circle width=0.5]
 	}
 	subgraph "hidden nodes" {
-		9 [fontsize=12 height=0.2 shape=circle width=0.2]
-		23 [fontsize=12 height=0.2 shape=circle width=0.2]
-		26 [fontsize=12 height=0.2 shape=circle width=0.2]
+		9 [label="sum
+tanh" fontsize=12 height=0.2 shape=circle width=0.2]
+		23 [label="min
+sigmoid" fontsize=12 height=0.2 shape=circle width=0.2]
+		26 [label="sum
+sigmoid" fontsize=12 height=0.2 shape=circle width=0.2]
 	}
 	subgraph "output nodes" {
 		graph [rank=max]
-		2 [color=red fontsize=12 height=0.2 shape=circle width=0.2]
-		7 [color=red fontsize=12 height=0.2 shape=circle width=0.2]
+		2 [label="sum
+sigmoid" xlabel=2 color=red fontsize=12 height=0.2 shape=circle width=0.2]
+		7 [label="sum
+sigmoid" xlabel=7 color=red fontsize=12 height=0.2 shape=circle width=0.2]
 	}
 }
