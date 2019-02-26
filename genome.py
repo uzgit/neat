@@ -1,12 +1,14 @@
 from copy import deepcopy
 from random import *
-from functions import *
+import pickle
 
+
+from functions import *
 from globals import *
 
 class NodeGene:
 
-    def __init__(self, identifier, aggregation_function=default_aggregation_function, activation_function=default_activation_function, is_input_node=False, is_output_node=False):
+    def __init__(self, identifier, aggregation_function=default_aggregation_function, activation_function=default_activation_function, is_input_node=False, is_output_node=False, is_enabled=True):
 
         self.identifier = identifier
         self.aggregation_function = aggregation_function
@@ -14,7 +16,7 @@ class NodeGene:
         self.is_input_node= is_input_node
         self.is_output_node = is_output_node
 
-        self.fitness = None
+        self.is_enabled = is_enabled
 
     def __str__(self):
 
@@ -318,6 +320,44 @@ class Genome:
 
         new_activation_function = choice(activation_function_names)
         mutated_node.activation_function = new_activation_function
+
+    def save(self, filename):
+
+        file = open(filename, "wb")
+        pickle.dump(self, file, protocol=-1)
+
+    @classmethod
+    def from_file(cls, filename):
+        file = open(filename, "rb")
+        return pickle.load(file)
+
+    def copy(self):
+        return deepcopy(self)
+
+    def similarity(self, genome):
+
+        numerator   = 0
+        denominator = 0
+
+        node_identifiers = [node.identifier for node in self.nodes]
+        other_node_identifiers = [node.identifier for node in genome.nodes]
+
+        edge_innovation_numbers = [edge.innovation_number for edge in self.edges]
+        other_edge_innovation_numbers = [edge.innovation_number for edge in genome.edges]
+
+        for node_identifier in node_identifiers:
+            if node_identifier in other_node_identifiers:
+                numerator += node_gene_similarity_coefficient
+
+        denominator += node_gene_similarity_coefficient * max(len(self.nodes), len(genome.nodes))
+
+        for edge_innovation_number in edge_innovation_numbers:
+            if edge_innovation_number in other_edge_innovation_numbers:
+                numerator += edge_gene_similarity_coefficient
+
+        denominator += edge_gene_similarity_coefficient * max(len(self.edges), len(genome.edges))
+
+        return numerator / denominator
 
     def __str__(self):
 

@@ -58,9 +58,11 @@ genome1.mutate_remove_edge(5)
 genome1.mutate_change_aggregation_function()
 genome1.mutate_change_activation_function()
 
+genome1.save("genome1.genome")
+genome5 = Genome.from_file("genome1.genome")
 
+neural_network2 = FeedForwardNeuralNetwork(genome5)
 
-neural_network2 = FeedForwardNeuralNetwork(genome1)
 #print(neural_network1)
 
 #print( neural_network1.activate([0, 1, 1]), neural_network2.activate([0, 1, 1]) )
@@ -69,10 +71,18 @@ neural_network2 = FeedForwardNeuralNetwork(genome1)
 print(neural_network2.genome)
 print(neural_network2)
 
-draw_neural_network_active(neural_network2, "images/network_2_active")
+# draw_neural_network_active(neural_network2, "images/network_2_active")
 draw_neural_network_full(  neural_network2, "images/network_2_full")
 # draw_neural_network_active(neural_network2, "images/network 2")
 
 # genome2 = Genome.default(2, 5, 2, num_hidden_nodes=10, mode="full")
 # network3 = FeedForwardNeuralNetwork(genome2)
 # draw_neural_network_active(network3)
+
+genome5.mutate_remove_edge()
+genome5.mutate_remove_node()
+
+neural_network3 = FeedForwardNeuralNetwork(genome5)
+draw_neural_network_full(neural_network3, "images/network3_full")
+
+print(genome1.similarity(genome5))

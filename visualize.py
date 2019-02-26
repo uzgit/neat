@@ -2,13 +2,13 @@ import graphviz
 
 fontsize = '12'
 
-aggregation_function_names = {
+aggregation_function_label_names = {
     "sum" : "sum",
     "min" : "min",
     "max" : "max",
 }
 
-activation_function_labels = {
+activation_function_label_names = {
     "arctan": "arctan",
     "binary_step": "step",
     "identity": "id",
@@ -23,11 +23,9 @@ activation_function_labels = {
 
 def label(node):
 
-    # representation = "{},{}\n{}\n{}".format(node.identifier, node.layer, node.aggregation_function, node.activation_function)
-    # representation = "{}\n{}\n{}".format(node.identifier, node.aggregation_function, node.activation_function)
     representation = ""
-    representation += str(node.aggregation_function)
-    representation += "\n" + str(node.activation_function)
+    representation += aggregation_function_label_names[node.aggregation_function]
+    representation += "\n" + activation_function_label_names[node.activation_function]
 
     return representation
 

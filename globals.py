@@ -23,9 +23,10 @@ default_genome_mode = "unconnected"
 #default_genome_mode = "fully connected"
 
 # variables for comparing genomes
-node_gene_coefficient = 0.6
-edge_gene_coefficient = 0.9
-edge_weight_coefficient = 0.2
+node_gene_similarity_coefficient = 0.6
+edge_gene_similarity_coefficient = 0.9
+edge_weight_similarity_coefficient = 0.2
+species_similarity_measure = 0.7
 
 # variables for mutating genomes
 add_node_probability = 0.2
