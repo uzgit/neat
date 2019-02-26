@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from genome import *
 from neural_network import *
 from visualize import *
 
@@ -48,34 +47,34 @@ neural_network1 = FeedForwardNeuralNetwork(genome1)
 # print(neural_network1)
 # print()
 
-genome1.mutate_add_node(9, 21, 22)
-genome1.mutate_add_node(23, 24, 25)
-genome1.mutate_add_node(26, 27, 28)
-genome1.mutate_remove_node(5)
-genome1.mutate_remove_node(26)
-genome1.mutate_reset_weight()
-genome1.mutate_scale_weight()
-for i in range(10):
-    genome1.mutate_add_edge(66, weight=23.795 - i)
-genome1.mutate_remove_edge(2)
-genome1.mutate_change_aggregation_function()
-genome1.mutate_change_activation_function()
+# genome1.mutate_add_node(9, 21, 22)
+# genome1.mutate_add_node(23, 24, 25)
+# genome1.mutate_add_node(26, 27, 28)
+# genome1.mutate_remove_node(5)
+# genome1.mutate_remove_node(26)
+# genome1.mutate_reset_weight()
+# genome1.mutate_scale_weight()
+# for i in range(10):
+#     genome1.mutate_add_edge(66, weight=23.795 - i)
+# genome1.mutate_remove_edge(2)
+# genome1.mutate_change_aggregation_function()
+# genome1.mutate_change_activation_function()
 
-genome1.save("genome1.genome")
-genome5 = Genome.from_file("genome1.genome")
+# genome1.save("genome1.genome")
+# genome5 = Genome.from_file("genome1.genome")
 
-neural_network2 = FeedForwardNeuralNetwork(genome5)
+# neural_network2 = FeedForwardNeuralNetwork(genome5)
 
 #print(neural_network1)
 
-print( neural_network1.activate([0, 1, 1]), neural_network2.activate([0, 1, 1]) )
-print( neural_network1.activate([0, 2, 2]), neural_network2.activate([0, 2, 2]) )
+# print( neural_network1.activate([0, 1, 1]), neural_network2.activate([0, 1, 1]) )
+# print( neural_network1.activate([0, 2, 2]), neural_network2.activate([0, 2, 2]) )
 
-print(neural_network2.genome)
-print(neural_network2)
+# print(neural_network2.genome)
+# print(neural_network2)
 
-draw_neural_network_active(neural_network2, "images/network_2_active")
-draw_neural_network_full(  neural_network2, "images/network_2_full")
+# draw_neural_network_active(neural_network2, "images/network_2_active")
+# draw_neural_network_full(  neural_network2, "images/network_2_full")
 # draw_neural_network_active(neural_network2, "images/network 2")
 
 # genome2 = Genome.default(2, 5, 2, num_hidden_nodes=10, mode="full")
@@ -88,3 +87,20 @@ draw_neural_network_full(  neural_network2, "images/network_2_full")
 # neural_network3 = FeedForwardNeuralNetwork(genome5)
 # draw_neural_network_full(neural_network3, "images/network3_full")
 # print(genome1.similarity(genome5))
+
+# genome with no connections
+# genome10 = Genome(10, nodes, [])
+# neural_network10 = FeedForwardNeuralNetwork(genome10)
+# print(neural_network10.activate([1, 2, 3]))
+# draw_neural_network_active(neural_network10)
+
+genome4 = Genome.default(4, 4, 2, num_hidden_nodes=3, mode="fully connected", output_activation_function="binary_step")
+print(genome4)
+neural_network4 = FeedForwardNeuralNetwork(genome4)
+draw_neural_network_active(neural_network4)
+draw_neural_network_full(neural_network4)
+
+# print(neural_network4.activate([1, 2, 3, 4]))
+# print(neural_network4.activate([1, 2, 3, 4]))
+# print(neural_network4.activate([1, 2, 3, 4]))
+# print(neural_network4.activate([3, 7, 8, 5]))

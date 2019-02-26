@@ -94,8 +94,15 @@ class FeedForwardNeuralNetwork:
 
         self.generate_nodes()
 
+
         # sort the nodes by identifier first, for display purposes
         self.nodes.sort(key=lambda node: node.identifier)
+
+        # # if no nodes are linked to the output nodes:
+        # if len([node for node in self.nodes if node.is_output_node]) == 0:
+        #     for node in [node for node in self.genome.nodes if node.is_output_node]:
+        #         self.nodes.append(Node(node.identifier, node.aggregation_function, node.activation_function, layer=2, is_output_node=True))
+
         self.input_nodes  = [node for node in self.nodes if node.is_input_node]
         self.hidden_nodes = [node for node in self.nodes if not node.is_input_node and not node.is_output_node]
         self.output_nodes = [node for node in self.nodes if node.is_output_node]

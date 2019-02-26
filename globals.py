@@ -18,6 +18,9 @@ default_activation_function = "sigmoid"
 default_input_aggregation_function = "sum"
 default_input_activation_function = "identity"
 
+# variables for output NodeGenes
+default_output_activation_function = "sigmoid"
+
 # variables for creating a default Genome
 default_genome_mode = "unconnected"
 #default_genome_mode = "fully connected"

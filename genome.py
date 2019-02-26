@@ -2,7 +2,6 @@ from copy import deepcopy
 from random import *
 import pickle
 
-
 from functions import *
 from globals import *
 
@@ -82,6 +81,8 @@ class Genome:
 
     def __init__(self, identifier, nodes, edges):
 
+        assert len(nodes) > 0
+
         self.identifier = identifier
         self.nodes = deepcopy(nodes)
         self.nodes.sort(key=lambda node: node.identifier)
@@ -90,61 +91,78 @@ class Genome:
         self.num_inputs  = len([node for node in self.nodes if node.is_input_node])
         self.num_outputs = len([node for node in self.nodes if node.is_output_node])
 
+
+
     @classmethod
-    def default(cls, identifier, num_inputs, num_outputs, aggregation_function="sum", activation_function="sigmoid", output_activation_function="sigmoid", num_hidden_nodes=0, mode=default_genome_mode, weights="randomized"):
+    def default(cls, identifier, num_inputs, num_outputs, num_hidden_nodes=0, aggregation_function=default_aggregation_function, activation_function=default_activation_function, input_aggregation_function=default_input_aggregation_function, input_activation_function=default_input_activation_function, output_activation_function=default_output_activation_function, mode=default_genome_mode, weights="randomized"):
 
-        cls.identifier = identifier
-        cls.num_inputs = num_inputs
-        cls.num_outputs = num_outputs
-
-        cls.nodes = []
-        cls.edges = []
+        nodes = []
+        edges = []
 
         node_identifier = 1
         for i in range(1, num_inputs + 1):
-            cls.nodes.append(NodeGene(node_identifier, aggregation_function="sum", activation_function="identity", is_input_node=True))
+            nodes.append(NodeGene(node_identifier, aggregation_function=input_aggregation_function, activation_function=input_activation_function, is_input_node=True))
             node_identifier += 1
 
         for i in range(1, num_hidden_nodes + 1):
-            cls.nodes.append(NodeGene(node_identifier, aggregation_function=aggregation_function, activation_function=activation_function))
+            nodes.append(NodeGene(node_identifier, aggregation_function=aggregation_function, activation_function=activation_function))
             node_identifier += 1
 
         for i in range(1, num_outputs + 1):
-            cls.nodes.append(NodeGene(node_identifier, aggregation_function=aggregation_function, activation_function=output_activation_function, is_output_node=True))
+            nodes.append(NodeGene(node_identifier, aggregation_function=aggregation_function, activation_function=output_activation_function, is_output_node=True))
             node_identifier += 1
 
         if mode == "fully connected":
 
-            input_nodes  = [node for node in cls.nodes if node.is_input_node]
-            hidden_nodes = [node for node in cls.nodes if not node.is_input_node and not node.is_output_node]
-            output_nodes = [node for node in cls.nodes if node.is_output_node]
+            print("here")
+
+            input_nodes  = [node for node in nodes if node.is_input_node]
+            hidden_nodes = [node for node in nodes if not node.is_input_node and not node.is_output_node]
+            output_nodes = [node for node in nodes if node.is_output_node]
 
             edge_identifier = 1
             innovation_number = 1
-            for input_node in input_nodes:
+
+            if num_hidden_nodes != 0:
+                for input_node in input_nodes:
+                    for hidden_node in hidden_nodes:
+
+                        if weights == "randomized":
+                            weight = uniform(global_weight_min, global_weight_max)
+                        else:
+                            weight = 1
+
+                        edges.append(EdgeGene(edge_identifier, innovation_number, input_node.identifier, hidden_node.identifier, weight))
+
+                        edge_identifier   += 1
+                        innovation_number += 1
+
                 for hidden_node in hidden_nodes:
+                    for output_node in output_nodes:
 
-                    if weights == "randomized":
-                        weight = uniform(-2, 2)
-                    else:
-                        weight = 1
+                        if weights == "randomized":
+                            weight = uniform(global_weight_min, global_weight_max)
+                        else:
+                            weight = 1
 
-                    cls.edges.append(EdgeGene(edge_identifier, innovation_number, input_node.identifier, hidden_node.identifier, weight))
+                        edges.append(EdgeGene(edge_identifier, innovation_number, hidden_node.identifier, output_node.identifier, weight))
+                        edge_identifier   += 1
+                        innovation_number += 1
+            else:
+                for input_node in input_nodes:
+                    for output_node in output_nodes:
 
-                    edge_identifier   += 1
-                    innovation_number += 1
+                        if weights == "randomized":
+                            weight = uniform(global_weight_min, global_weight_max)
+                        else:
+                            weight = 1
 
-            for hidden_node in hidden_nodes:
-                for output_node in output_nodes:
+                        edges.append(EdgeGene(edge_identifier, innovation_number, input_node.identifier, output_node.identifier, weight))
 
-                    if weights == "randomized":
-                        weight = uniform(-2, 2)
-                    else:
-                        weight = 1
+                        edge_identifier   += 1
+                        innovation_number += 1
 
-                    cls.edges.append(EdgeGene(edge_identifier, innovation_number, hidden_node.identifier, output_node.identifier, weight))
-
-        return cls
+        return Genome(identifier, nodes, edges)
 
     def mutate_add_node(self, new_node_identifier, innovation_number_1, innovation_number_2, disabled_edge_identifier=None, mode=None, new_node_aggregation_function=default_aggregation_function, new_node_activation_function=default_activation_function):
 
