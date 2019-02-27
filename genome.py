@@ -352,10 +352,11 @@ class Genome:
             new_activation_function = choice(activation_function_names)
             mutated_node.activation_function = new_activation_function
 
-    def crossover(self, other_genome):
+    @classmethod
+    def crossover(cls, genome1, genome2):
 
         # if self Genome performs better than other_genome
-        if self.fitness > other_genome.fitness:
+        if genome1.fitness > genome2.fitness:
             return
         else:
             return

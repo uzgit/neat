@@ -24,7 +24,9 @@ def lelu(x):
     return x if x > 0.0 else leaky * x
 
 def logistic(x):
-    numpy.clip(x, -400, 400)
+
+    # We get an overflow error if x < 709 (not 708, but still clipped to -708 min just in case)
+    x = max(x, -708)
     return 1.0 / (1 + (math.e ** (-x)))
 
 def relu(x):
@@ -36,7 +38,8 @@ def relu(x):
 
 def sigmoid(x):
 
-    numpy.clip(x, -400, 400)
+    # We get an overflow error if x < 709 (not 708, but still clipped to -708 min just in case)
+    x = max(x, -708)
     return 1 / (1 + math.exp(-x))
 
 def softplus(x):
@@ -46,6 +49,8 @@ def step(x):
     return 0 if x < 0.5 else 1
 
 def tanh(x):
+
+    x = max(-353, x)
     return (2.0 / (1 + (math.e ** (-2 * x)))) - 1
 
 aggregation_functions = {

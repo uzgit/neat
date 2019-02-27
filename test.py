@@ -109,7 +109,7 @@ neural_network1 = FeedForwardNeuralNetwork(genome1)
 # print(neural_network4.activate([1, 2, 3, 4]))
 # print(neural_network4.activate([3, 7, 8, 5]))
 
-population = Population(150, 500, 2, 1, max_num_hidden_nodes=10, output_activation_function="binary_step")
+# population = Population(150, 500, 2, 1, max_num_hidden_nodes=10, output_activation_function="binary_step")
 
 # for genome in population.genomes:
 #     print(genome)
@@ -127,9 +127,17 @@ population = Population(150, 500, 2, 1, max_num_hidden_nodes=10, output_activati
 
 # draw_neural_network_full(neural_network50, "images/complex")
 
-best_genome = population.run_with_local_fitness_function(test_xor, num_generations=1000, fitness_goal=4)
-best_neural_network = FeedForwardNeuralNetwork(best_genome)
-draw_neural_network_full(best_neural_network)
+max_fitness = 0
+while max_fitness < 4:
+
+    population = Population(150, 500, 2, 1, max_num_hidden_nodes=10, output_activation_function="binary_step")
+    best_genome = population.run_with_local_fitness_function(test_xor, num_generations=1000, fitness_goal=4)
+    best_neural_network = FeedForwardNeuralNetwork(best_genome)
+
+    max_fitness = best_neural_network.genome.fitness
+
+draw_neural_network_active(best_neural_network, "images/xor_active")
+draw_neural_network_full(best_neural_network, "images/xor_full")
 
 print(best_genome)
 print("fitness:", test_xor_print(best_neural_network))
