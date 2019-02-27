@@ -111,9 +111,14 @@ population = Population(150, 14, 2, 0)
 #     print(genome)
 # print(population)
 
-for i in range(5000):
+for i in range(500):
     print(i)
     population.mutate_all_genomes()
 
 neural_network50 = FeedForwardNeuralNetwork(population.genomes[5])
+
+for i in range(20):
+    inputs = [uniform(-10, 10) for ii in range(14)]
+    print(neural_network50.activate(inputs))
+
 draw_neural_network_full(neural_network50, "images/complex")
