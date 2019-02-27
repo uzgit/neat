@@ -99,8 +99,8 @@ class Population:
                 successfully_mutated = False
                 raise ValueError("Incorrect mutation requested: " + mutation)
 
-            if successfully_mutated:
-                num_mutations += 1
+            #if successfully_mutated:
+            num_mutations += 1
 
     def __str__(self):
 
