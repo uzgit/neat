@@ -1,4 +1,5 @@
 import math
+import numpy
 
 # aggregation_functions
 
@@ -23,6 +24,7 @@ def lelu(x):
     return x if x > 0.0 else leaky * x
 
 def logistic(x):
+    numpy.clip(x, -400, 400)
     return 1.0 / (1 + (math.e ** (-x)))
 
 def relu(x):
@@ -33,6 +35,8 @@ def relu(x):
     return result
 
 def sigmoid(x):
+
+    numpy.clip(x, -400, 400)
     return 1 / (1 + math.exp(-x))
 
 def softplus(x):

@@ -166,6 +166,9 @@ class Genome:
 
         active_edges = [edge for edge in self.edges if edge.is_enabled]
 
+        new_edge_1 = None
+        new_edge_2 = None
+
         if len(active_edges) > 0:
 
             if disabled_edge_identifier == None:
@@ -189,6 +192,8 @@ class Genome:
             self.nodes.append(new_node)
             self.edges.append(new_edge_1)
             self.edges.append(new_edge_2)
+
+        return new_edge_1, new_edge_2
 
     def mutate_remove_node(self, removed_node_identifier=None):
 
@@ -347,6 +352,18 @@ class Genome:
             new_activation_function = choice(activation_function_names)
             mutated_node.activation_function = new_activation_function
 
+    def crossover(self, other_genome):
+
+        # if self Genome performs better than other_genome
+        if self.fitness > other_genome.fitness:
+            return
+        else:
+            return
+
+    def num_hidden_nodes(self):
+
+        return len([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled])
+
     def save(self, filename):
 
         file = open(filename, "wb")
@@ -387,7 +404,7 @@ class Genome:
 
     def __str__(self):
 
-        representation = "Genome {}:\n".format(self.identifier)
+        representation = "Genome {}, fitness {}:\n".format(self.identifier, self.fitness)
 
         for node in self.nodes:
             representation += "\t" + node.str() + "\n"

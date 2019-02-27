@@ -18,9 +18,9 @@ mutations = {
 
 class Population:
 
-    def __init__(self, population_size, num_generations, num_inputs, num_outputs, initial_num_hidden_nodes=0, output_activation_function=default_output_activation_function, mode="unconnected"):
+    def __init__(self, population_size, num_generations, num_inputs, num_outputs, initial_num_hidden_nodes=0, max_num_hidden_nodes=10, output_activation_function=default_output_activation_function, mode="unconnected"):
 
-        self.innovation_number = 1
+        self.next_innovation_number = 1
         ####################################################################
         self.innovations = []
         ####################################################################
@@ -31,6 +31,7 @@ class Population:
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
         self.initial_num_hidden_nodes = initial_num_hidden_nodes
+        self.max_num_hidden_nodes = max_num_hidden_nodes
         self.mode = mode
         self.output_activation_function = output_activation_function
 
@@ -43,6 +44,7 @@ class Population:
         for i in range(self.population_size):
 
             self.genomes.append(Genome.default(self.genome_identifier, self.num_inputs, self.num_outputs, self.initial_num_hidden_nodes, output_activation_function=self.output_activation_function, mode=self.mode))
+            self.genome_identifier += 1
 
     def mutate_all_genomes(self):
 
@@ -65,10 +67,13 @@ class Population:
             if mutation == None or mutation == "":
                 successfully_mutated = False
 
-            elif mutation == "add node":
+            elif mutation == "add node" and genome.num_hidden_nodes() < self.max_num_hidden_nodes:
                 node_identifier = max([node.identifier for node in genome.nodes]) + 1
-                genome.mutate_add_node(node_identifier, self.innovation_number + 1, self.innovation_number + 2)
-                self.innovation_number += 2
+                new_edge_1, new_edge_2 = genome.mutate_add_node(node_identifier, self.next_innovation_number, self.next_innovation_number + 1)
+
+                if new_edge_1 is not None:
+                    self.set_innovation_number(new_edge_1)
+                    self.set_innovation_number(new_edge_2)
 
             elif mutation == "remove node":
                 genome.mutate_remove_node()
@@ -77,8 +82,7 @@ class Population:
                 edge_identifier = max([edge.identifier for edge in genome.edges], default=0) + 1
                 edge = genome.mutate_add_edge(edge_identifier)
                 if edge is not None:
-                    fsdfsdfds = 1
-                    # deal with innovation number here
+                    self.set_innovation_number(edge)
                 else: #if the genome is already fully connected
                     successfully_mutated = False
 
@@ -115,7 +119,7 @@ class Population:
 
         max_fitness = max([genome.fitness for genome in self.genomes])
         self.generations_run = 0
-        while self.generations_run < num_generations and (max_fitness < fitness_goal if fitness_goal is not None else True):
+        while (self.generations_run < num_generations if num_generations != -1 else True) and (max_fitness < fitness_goal if fitness_goal is not None else True):
 
             # mutate genomes if we have passed the first run
             if self.generations_run > 1:
@@ -141,6 +145,19 @@ class Population:
             print("Best genome in generation {}: genome {}, fitness: {}".format(self.generations_run, sorted_genomes[0].identifier, sorted_genomes[0].fitness), file=output_stream)
 
         return sorted_genomes[0]
+
+    def set_innovation_number(self, edge):
+
+        matching_edge = ([matching_edge for matching_edge in self.innovations if edge.input_node_identifier == matching_edge.input_node_identifier and edge.output_node_identifier == matching_edge.output_node_identifier] + [None])[0]
+        if matching_edge == None:
+
+            edge.innovation_number = self.next_innovation_number
+
+            self.innovations.append(edge)
+            self.next_innovation_number += 1
+
+        else:
+            edge.innovation_number = matching_edge.innovation_number
 
     def __str__(self):
 
