@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import os
+import sys
+
+from xor import *
 
 from population import *
 from visualize import *
@@ -62,8 +66,8 @@ neural_network1 = FeedForwardNeuralNetwork(genome1)
 
 # genome1.save("genome1.genome")
 # genome5 = Genome.from_file("genome1.genome")
-
 # neural_network2 = FeedForwardNeuralNetwork(genome5)
+# os.remove("genome1.genome")
 
 #print(neural_network1)
 
@@ -105,20 +109,27 @@ neural_network1 = FeedForwardNeuralNetwork(genome1)
 # print(neural_network4.activate([1, 2, 3, 4]))
 # print(neural_network4.activate([3, 7, 8, 5]))
 
-population = Population(150, 14, 2, 0)
+population = Population(150, 500, 2, 1, output_activation_function="binary_step")
 
 # for genome in population.genomes:
 #     print(genome)
 # print(population)
 
-for i in range(500):
-    print(i)
-    population.mutate_all_genomes()
+# for i in range(50):
+#     print(i)
+#     population.mutate_all_genomes()
 
-neural_network50 = FeedForwardNeuralNetwork(population.genomes[5])
+# neural_network50 = FeedForwardNeuralNetwork(population.genomes[5])
 
-for i in range(20):
-    inputs = [uniform(-10, 10) for ii in range(14)]
-    print(neural_network50.activate(inputs))
+# for i in range(20):
+#     inputs = [uniform(-10, 10) for ii in range(2)]
+#     print(neural_network50.activate(inputs))
 
-draw_neural_network_full(neural_network50, "images/complex")
+# draw_neural_network_full(neural_network50, "images/complex")
+
+best_genome = population.run_with_local_fitness_function(test_xor, fitness_goal=4)
+best_neural_network = FeedForwardNeuralNetwork(best_genome)
+draw_neural_network_full(best_neural_network)
+
+print(best_genome)
+print("fitness:", test_xor_print(best_neural_network))

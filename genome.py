@@ -91,7 +91,7 @@ class Genome:
         self.num_inputs  = len([node for node in self.nodes if node.is_input_node])
         self.num_outputs = len([node for node in self.nodes if node.is_output_node])
 
-
+        self.fitness = 0
 
     @classmethod
     def default(cls, identifier, num_inputs, num_outputs, num_hidden_nodes=0, aggregation_function=default_aggregation_function, activation_function=default_activation_function, input_aggregation_function=default_input_aggregation_function, input_activation_function=default_input_activation_function, output_activation_function=default_output_activation_function, mode=default_genome_mode, weights="randomized"):
@@ -113,8 +113,6 @@ class Genome:
             node_identifier += 1
 
         if mode == "fully connected":
-
-            print("here")
 
             input_nodes  = [node for node in nodes if node.is_input_node]
             hidden_nodes = [node for node in nodes if not node.is_input_node and not node.is_output_node]

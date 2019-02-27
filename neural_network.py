@@ -84,7 +84,8 @@ class FeedForwardNeuralNetwork:
     def __init__(self, genome):
 
         ################################################################
-        self.genome = deepcopy(genome)
+        #self.genome = deepcopy(genome)
+        self.genome = genome
         self.num_inputs = genome.num_inputs
         self.num_outputs = genome.num_outputs
         self.identifier = genome.identifier

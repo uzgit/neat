@@ -18,7 +18,7 @@ mutations = {
 
 class Population:
 
-    def __init__(self, population_size, num_inputs, num_outputs, initial_num_hidden_nodes=0, mode="unconnected"):
+    def __init__(self, population_size, num_generations, num_inputs, num_outputs, initial_num_hidden_nodes=0, output_activation_function=default_output_activation_function, mode="unconnected"):
 
         self.innovation_number = 1
         ####################################################################
@@ -27,20 +27,22 @@ class Population:
         self.genome_identifier = 1
 
         self.population_size = population_size
+        self.num_generations = num_generations
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
         self.initial_num_hidden_nodes = initial_num_hidden_nodes
+        self.mode = mode
+        self.output_activation_function = output_activation_function
 
         self.genomes = []
         self.species = []
-
-        self.initialize_genomes()
+        self.neural_networks = []
 
     def initialize_genomes(self):
 
         for i in range(self.population_size):
 
-            self.genomes.append(Genome.default(self.genome_identifier, self.num_inputs, self.num_outputs, self.initial_num_hidden_nodes))
+            self.genomes.append(Genome.default(self.genome_identifier, self.num_inputs, self.num_outputs, self.initial_num_hidden_nodes, output_activation_function=self.output_activation_function, mode=self.mode))
 
     def mutate_all_genomes(self):
 
@@ -101,6 +103,44 @@ class Population:
 
             #if successfully_mutated:
             num_mutations += 1
+
+    def run_with_local_fitness_function(self, evaluation_function, num_generations=None, fitness_goal=None, output_stream=None):
+
+        if num_generations == None:
+            num_generations = self.num_generations
+
+        print("Beginning run: {} members, {} generations, {} fitness goal.".format(self.population_size, num_generations, fitness_goal), file=output_stream)
+
+        self.initialize_genomes()
+
+        max_fitness = max([genome.fitness for genome in self.genomes])
+        self.generations_run = 0
+        while self.generations_run < num_generations and (max_fitness < fitness_goal if fitness_goal is not None else True):
+
+            # mutate genomes if we have passed the first run
+            if self.generations_run > 1:
+                self.mutate_all_genomes()
+
+            # create neural networks
+            self.neural_networks.clear()
+            for genome in self.genomes:
+                genome.fitness = 0
+
+                neural_network = FeedForwardNeuralNetwork(genome)
+                self.neural_networks.append(neural_network)
+
+            for neural_network in self.neural_networks:
+                evaluation_function(neural_network)
+
+            # update loop conditions
+            max_fitness = max([genome.fitness for genome in self.genomes])
+            self.generations_run += 1
+
+            # find best genome
+            sorted_genomes = sorted(self.genomes, key=lambda genome : genome.fitness, reverse=True)
+            print("Best genome in generation {}: genome {}, fitness: {}".format(self.generations_run, sorted_genomes[0].identifier, sorted_genomes[0].fitness), file=output_stream)
+
+        return sorted_genomes[0]
 
     def __str__(self):
 
