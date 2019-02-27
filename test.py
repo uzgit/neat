@@ -44,20 +44,22 @@ edges.append(EdgeGene(8, 8, 4, 5, 2))
 
 genome1 = Genome(1, nodes, edges)
 
-neural_network1 = FeedForwardNeuralNetwork(genome1)
+genome2 = Genome(2, nodes, edges)
+
+# neural_network1 = FeedForwardNeuralNetwork(genome1)
 
 #print(genome1)
 
 # print(neural_network1)
 # print()
 
-# genome1.mutate_add_node(9, 21, 22)
-# genome1.mutate_add_node(23, 24, 25)
-# genome1.mutate_add_node(26, 27, 28)
-# genome1.mutate_remove_node(5)
-# genome1.mutate_remove_node(26)
-# genome1.mutate_reset_weight()
-# genome1.mutate_scale_weight()
+genome1.mutate_add_node(9, 21, 22)
+genome1.mutate_add_node(23, 24, 25)
+genome1.mutate_add_node(26, 27, 28)
+genome1.mutate_remove_node(5)
+genome1.mutate_remove_node(26)
+genome1.mutate_reset_weight()
+genome1.mutate_scale_weight()
 # for i in range(10):
 #     genome1.mutate_add_edge(66, weight=23.795 - i)
 # genome1.mutate_remove_edge(2)
@@ -70,6 +72,16 @@ neural_network1 = FeedForwardNeuralNetwork(genome1)
 # os.remove("genome1.genome")
 
 #print(neural_network1)
+
+neural_network_1 = FeedForwardNeuralNetwork(genome1)
+neural_network_2 = FeedForwardNeuralNetwork(genome2)
+
+draw_neural_network_full(neural_network_1, "images/network1")
+draw_neural_network_full(neural_network_2, "images/network2")
+
+genome3 = Genome.crossover(genome1, genome2, 3)
+neural_network_3 = FeedForwardNeuralNetwork(genome3)
+draw_neural_network_full(neural_network_3, "images/network3")
 
 # print( neural_network1.activate([0, 1, 1]), neural_network2.activate([0, 1, 1]) )
 # print( neural_network1.activate([0, 2, 2]), neural_network2.activate([0, 2, 2]) )
@@ -127,17 +139,18 @@ neural_network1 = FeedForwardNeuralNetwork(genome1)
 
 # draw_neural_network_full(neural_network50, "images/complex")
 
-max_fitness = 0
-while max_fitness < 4:
+# max_fitness = 0
+# while max_fitness < 4:
+#
+#     population = Population(150, 500, 2, 1, max_num_hidden_nodes=10, output_activation_function="binary_step")
+#     best_genome = population.run_with_local_fitness_function(test_xor, num_generations=1000, fitness_goal=4)
+#     best_neural_network = FeedForwardNeuralNetwork(best_genome)
+#
+#     max_fitness = best_neural_network.genome.fitness
+#
+# draw_neural_network_active(best_neural_network, "images/xor_active")
+# draw_neural_network_full(best_neural_network, "images/xor_full")
+#
+# print(best_genome)
+# print("fitness:", test_xor_print(best_neural_network))
 
-    population = Population(150, 500, 2, 1, max_num_hidden_nodes=10, output_activation_function="binary_step")
-    best_genome = population.run_with_local_fitness_function(test_xor, num_generations=1000, fitness_goal=4)
-    best_neural_network = FeedForwardNeuralNetwork(best_genome)
-
-    max_fitness = best_neural_network.genome.fitness
-
-draw_neural_network_active(best_neural_network, "images/xor_active")
-draw_neural_network_full(best_neural_network, "images/xor_full")
-
-print(best_genome)
-print("fitness:", test_xor_print(best_neural_network))
