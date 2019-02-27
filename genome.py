@@ -168,43 +168,46 @@ class Genome:
 
         active_edges = [edge for edge in self.edges if edge.is_enabled]
 
-        if disabled_edge_identifier == None:
-            # choose a random active edge
-            disabled_edge = choice(active_edges)
-            disabled_edge.is_enabled = False
-        else:
-            disabled_edge = [edge for edge in active_edges if edge.identifier == disabled_edge_identifier][0]
+        if len(active_edges) > 0:
 
-        if mode == "random":
-            new_node_aggregation_function = choice(aggregation_function_names)
-            new_node_activation_function = choice(activation_function_names)
+            if disabled_edge_identifier == None:
+                # choose a random active edge
+                disabled_edge = choice(active_edges)
+                disabled_edge.is_enabled = False
+            else:
+                disabled_edge = [edge for edge in active_edges if edge.identifier == disabled_edge_identifier][0]
 
-        # create a new node
-        new_node = NodeGene(new_node_identifier, new_node_aggregation_function, new_node_activation_function)
+            if mode == "random":
+                new_node_aggregation_function = choice(aggregation_function_names)
+                new_node_activation_function = choice(activation_function_names)
 
-        # create two new edges
-        new_edge_1 = EdgeGene(innovation_number_1, innovation_number_1, disabled_edge.input_node_identifier, new_node.identifier, 1)
-        new_edge_2 = EdgeGene(innovation_number_2, innovation_number_2, new_node.identifier, disabled_edge.output_node_identifier, disabled_edge.weight)
+            # create a new node
+            new_node = NodeGene(new_node_identifier, new_node_aggregation_function, new_node_activation_function)
 
-        self.nodes.append(new_node)
-        self.edges.append(new_edge_1)
-        self.edges.append(new_edge_2)
+            # create two new edges
+            new_edge_1 = EdgeGene(innovation_number_1, innovation_number_1, disabled_edge.input_node_identifier, new_node.identifier, 1)
+            new_edge_2 = EdgeGene(innovation_number_2, innovation_number_2, new_node.identifier, disabled_edge.output_node_identifier, disabled_edge.weight)
+
+            self.nodes.append(new_node)
+            self.edges.append(new_edge_1)
+            self.edges.append(new_edge_2)
 
     def mutate_remove_node(self, removed_node_identifier=None):
 
         if removed_node_identifier == None:
             # choose a random node to remove
-            removed_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled])
+            removed_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled] + [None])
         else:
-            removed_node = [node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled and node.identifier == removed_node_identifier][0]
+            removed_node = ([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled and node.identifier == removed_node_identifier] + [None])[0]
 
-        # disable the relevant node
-        removed_node.is_enabled = False
+        if removed_node is not None:
+            # disable the relevant node
+            removed_node.is_enabled = False
 
-        # get all the enabled edges that use the removed node as input or output and disable them
-        removed_edges = [edge for edge in self.edges if edge.is_enabled and (edge.input_node_identifier == removed_node.identifier or edge.output_node_identifier == removed_node.identifier)]
-        for edge in removed_edges:
-            edge.is_enabled = False
+            # get all the enabled edges that use the removed node as input or output and disable them
+            removed_edges = [edge for edge in self.edges if edge.is_enabled and (edge.input_node_identifier == removed_node.identifier or edge.output_node_identifier == removed_node.identifier)]
+            for edge in removed_edges:
+                edge.is_enabled = False
 
     def mutate_add_edge(self, new_edge_identifier, input_node_identifier=None, output_node_identifier=None, weight=None, weight_min=global_weight_min, weight_max=global_weight_max):
 
@@ -290,57 +293,61 @@ class Genome:
     def mutate_remove_edge(self, removed_edge_identifier=None):
 
         if removed_edge_identifier is not None:
-            removed_edge = [edge for edge in self.edges if edge.identifier == removed_edge_identifier][0]
+            removed_edge = ([edge for edge in self.edges if edge.identifier == removed_edge_identifier] + [None])[0]
         else:
-            removed_edge = choice(self.edges)
+            removed_edge = choice(self.edges + [None])
 
-        removed_edge.is_enabled = False
+        if removed_edge is not None:
+            removed_edge.is_enabled = False
 
         return removed_edge
 
     def mutate_reset_weight(self, reset_edge_identifier=None, weight_minimum=initial_weight_min, weight_maximum=initial_weight_max):
 
         if reset_edge_identifier == None:
-            reset_edge = choice([edge for edge in self.edges])
+            reset_edge = choice([edge for edge in self.edges] + [None])
         else:
-            reset_edge = [edge for edge in self.edges if edge.identifier == reset_edge_identifier][0]
+            reset_edge = ([edge for edge in self.edges if edge.identifier == reset_edge_identifier] + [None])[0]
 
-        new_weight = uniform(weight_minimum, weight_maximum)
-
-        reset_edge.weight = new_weight
+        if reset_edge is not None:
+            new_weight = uniform(weight_minimum, weight_maximum)
+            reset_edge.weight = new_weight
 
     def mutate_scale_weight(self, mutated_edge_identifier=None, scale_min=weight_scale_min, scale_max=weight_scale_max, weight_minimum=global_weight_min, weight_maximum=global_weight_max):
 
         if mutated_edge_identifier == None:
-            mutated_edge = choice([edge for edge in self.edges])
+            mutated_edge = choice([edge for edge in self.edges] + [None])
         else:
-            mutated_edge = [edge for edge in self.edges if edge.identifier == mutated_edge_identifier][0]
+            mutated_edge = ([edge for edge in self.edges if edge.identifier == mutated_edge_identifier] + [None])[0]
 
-        new_weight = mutated_edge.weight * uniform(scale_min, scale_max)
-        new_weight = max(weight_minimum, new_weight)
-        new_weight = min(weight_maximum, new_weight)
+        if mutated_edge is not None:
+            new_weight = mutated_edge.weight * uniform(scale_min, scale_max)
+            new_weight = max(weight_minimum, new_weight)
+            new_weight = min(weight_maximum, new_weight)
 
-        mutated_edge.weight = new_weight
+            mutated_edge.weight = new_weight
 
     def mutate_change_aggregation_function(self, mutated_node_identifier=None):
 
         if mutated_node_identifier == None:
-            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled])
+            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled] + [None])
         else:
-            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled and node.identifier == mutated_node_identifier][0])
+            mutated_node = choice(([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled and node.identifier == mutated_node_identifier] + [None])[0])
 
-        new_aggregation_function = choice(aggregation_function_names)
-        mutated_node.aggregation_function = new_aggregation_function
+        if mutated_node is not None:
+            new_aggregation_function = choice(aggregation_function_names)
+            mutated_node.aggregation_function = new_aggregation_function
 
     def mutate_change_activation_function(self, mutated_node_identifier=None):
 
         if mutated_node_identifier == None:
-            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled])
+            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled] + [None])
         else:
-            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled and node.identifier == mutated_node_identifier][0])
+            mutated_node = choice(([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled and node.identifier == mutated_node_identifier] + [None])[0])
 
-        new_activation_function = choice(activation_function_names)
-        mutated_node.activation_function = new_activation_function
+        if mutated_node is not None:
+            new_activation_function = choice(activation_function_names)
+            mutated_node.activation_function = new_activation_function
 
     def save(self, filename):
 

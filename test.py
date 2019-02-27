@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from neural_network import *
+from population import *
 from visualize import *
 
 nodes = []
@@ -94,13 +94,25 @@ neural_network1 = FeedForwardNeuralNetwork(genome1)
 # print(neural_network10.activate([1, 2, 3]))
 # draw_neural_network_active(neural_network10)
 
-genome4 = Genome.default(4, 4, 2, num_hidden_nodes=3, mode="fully connected", output_activation_function="binary_step")
-print(genome4)
-neural_network4 = FeedForwardNeuralNetwork(genome4)
-draw_neural_network_active(neural_network4)
-draw_neural_network_full(neural_network4)
+# genome4 = Genome.default(4, 4, 2, num_hidden_nodes=3, mode="fully connected", output_activation_function="binary_step")
+# print(genome4)
+# neural_network4 = FeedForwardNeuralNetwork(genome4)
+# draw_neural_network_active(neural_network4)
+# draw_neural_network_full(neural_network4)
 
 # print(neural_network4.activate([1, 2, 3, 4]))
 # print(neural_network4.activate([1, 2, 3, 4]))
 # print(neural_network4.activate([1, 2, 3, 4]))
 # print(neural_network4.activate([3, 7, 8, 5]))
+
+population = Population(150, 14, 2, 0)
+
+# for genome in population.genomes:
+#     print(genome)
+# print(population)
+
+for i in range(20):
+    population.mutate_all_genomes()
+
+neural_network50 = FeedForwardNeuralNetwork(population.genomes[20])
+draw_neural_network_full(neural_network50, "images/complex")

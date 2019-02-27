@@ -32,10 +32,15 @@ edge_weight_similarity_coefficient = 0.2
 species_similarity_measure = 0.7
 
 # variables for mutating genomes
-add_node_probability = 0.2
-remove_node_probability = 0.05
-add_edge_probability = 0.6
-remove_edge_probably = 0.4
+max_num_mutations_per_individual_per_generation = 10
+mutate_add_node_probability = 0.2
+mutate_remove_node_probability = 0.05
+mutate_add_edge_probability = 0.6
+mutate_remove_edge_probability = 0.4
+mutate_reset_weight_probability = 0.2
+mutate_scale_weight_probability = 0.2
+mutate_change_aggregation_function_probability = 0.05
+mutate_change_activation_function_probability = 0.05
 
 # variables for Populations
 default_population_size = 150
