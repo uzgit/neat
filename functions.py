@@ -43,6 +43,7 @@ def sigmoid(x):
     return 1 / (1 + math.exp(-x))
 
 def softplus(x):
+    x = min(x, 708)
     return math.log(1 + (math.e ** x))
 
 def step(x):

@@ -42,5 +42,10 @@ mutate_scale_weight_probability = 0.3
 mutate_change_aggregation_function_probability = 0.05
 mutate_change_activation_function_probability = 0.05
 
+# variables for Species
+stagnation_time = 20 # number of generations without fitness improvement before a species is considered stagnant
+elites_to_keep = 2
+reproduction_elitism = 0.25 # percentage of individuals who will reproduce to create the next generation of the species
+
 # variables for Populations
 default_population_size = 150
