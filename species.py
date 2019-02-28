@@ -6,19 +6,19 @@ from genome import *
 
 class Species:
 
-    def __init__(self, identifier, current_generation, genome=None):
+    def __init__(self, identifier, current_generation, genome):
+
+        assert genome is not None
 
         self.identifier = identifier
         self.starting_generation = current_generation
 
         self.ancestors = []
         self.genomes = []
-        if genome is not None:
-            self.genomes.append(genome)
         self.children = []
 
         self.fitness_history = []
-        self.champion = None
+        self.champion = genome
 
     def step_generation(self):
 
@@ -58,6 +58,17 @@ class Species:
             next_genome_identifier += 1
 
         return next_genome_identifier
+
+    def is_compatible_with(self, genome):
+
+        result = None
+
+        if self.champion.similarity(genome) > species_similarity_threshold:
+            result = True
+        else:
+            result = False
+
+        return result
 
     def is_stagnated(self):
 

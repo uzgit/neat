@@ -29,7 +29,7 @@ default_genome_mode = "unconnected"
 node_gene_similarity_coefficient = 0.6
 edge_gene_similarity_coefficient = 0.9
 edge_weight_similarity_coefficient = 0.2
-species_similarity_measure = 0.7
+species_similarity_threshold = 0.7
 
 # variables for mutating genomes
 max_num_mutations_per_individual_per_generation = 1
