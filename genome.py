@@ -382,14 +382,35 @@ class Genome:
                 new_genome_edges.append(new_edge)
 
         new_genome_node_identifiers = []
-        new_genome_node_identifiers += [edge.input_node_identifier for edge in new_genome_edges if edge.output_node_identifier not in new_genome_node_identifiers]
+        new_genome_node_identifiers += [edge.input_node_identifier for edge in new_genome_edges if edge.input_node_identifier not in new_genome_node_identifiers]
         new_genome_node_identifiers += [edge.output_node_identifier for edge in new_genome_edges if edge.output_node_identifier not in new_genome_node_identifiers]
 
         hidden_nodes = deepcopy(better_genome.nodes) + deepcopy(worse_genome.nodes)
         better_genome_node_identifiers = [node.identifier for node in better_genome.nodes]
         worse_genome_node_identifiers = [node.identifier for node in worse_genome.nodes]
 
-        new_genome_nodes = []
+        new_genome_nodes = [node for node in better_genome.nodes if node.is_input_node or node.is_output_node]
+        for new_node_identifier in new_genome_node_identifiers:
+
+            # next((x for x in test_list if x.value == value), None)
+            instance_from_better_genome = next((node for node in better_genome.nodes if node.identifier == new_node_identifier), None)
+            instance_from_worse_genome = next((node for node in worse_genome.nodes if node.identifier == new_node_identifier), None)
+
+            if instance_from_worse_genome is None:
+                new_node = instance_from_better_genome
+            elif instance_from_better_genome is None:
+                new_node = instance_from_worse_genome
+            elif instance_from_better_genome.is_enabled == False:
+                new_node = instance_from_better_genome
+            elif instance_from_worse_genome.is_enabled == False:
+                new_node = instance_from_worse_genome
+            else:
+                new_node = instance_from_better_genome
+
+            if new_node not in new_genome_nodes:
+                new_genome_nodes.append(new_node)
+
+        new_genome = Genome(new_genome_identifier, new_genome_nodes, new_genome_edges)
 
         # we must include all input and output nodes
         # new_genome_nodes = []

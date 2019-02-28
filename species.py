@@ -15,6 +15,7 @@ class Species:
 
         self.ancestors = []
         self.genomes = []
+        self.elites = []
         self.children = []
 
         self.fitness_history = []
@@ -23,11 +24,11 @@ class Species:
 
     def step_generation(self):
 
-        self.fitness = max([genome.fitness for genome in self.genomes])
+        self.fitness = max([genome.fitness for genome in self.genomes] + [0])
 
         self.fitness_history.append( self.fitness )
         sorted_genomes = sorted(self.genomes, key=lambda genome : genome.fitness)
-        if sorted_genomes[0].fitness > self.champion.fitness:
+        if len(sorted_genomes) > 0 and sorted_genomes[0].fitness > self.champion.fitness:
             self.champion = sorted_genomes[0]
 
         self.ancestors.clear()
@@ -44,16 +45,14 @@ class Species:
 
         num_parents = floor(num_individuals * reproduction_elitism)
 
-        print("num parents", num_parents)
-        print("num ancestors", len(self.ancestors))
-
         potential_parents = []
         for i in range(min(num_parents, len(self.ancestors) - 1)):
             potential_parents.append(sorted_ancestors[i])
 
-        elites = []
+        print(len(sorted_ancestors))
+        self.elites = []
         for i in range(min(elites_to_keep, num_individuals)):
-            elites.append(sorted_ancestors[i])
+            self.elites.append(sorted_ancestors[i])
 
         self.children.clear()
         num_children = (num_individuals - elites_to_keep)

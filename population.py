@@ -156,7 +156,6 @@ class Population:
             num_generations = self.num_generations
 
         print("Beginning run: {} members, {} generations, {} fitness goal.".format(self.population_size, num_generations, fitness_goal), file=output_stream)
-        print("genomes:", len(self.genomes))
 
         self.initialize_genomes() # all genomes are either unconnected or fully connected
         self.mutate_all_genomes() # randomize the genomes a bit
@@ -187,14 +186,15 @@ class Population:
             champion = deepcopy(self.genomes[0])
             self.genomes.clear()
 
-            print(len(self.genomes))
-
             for species in self.species:
                 num_individuals = int(self.population_size * species.fitness / total_fitness)
                 species.reproduce(num_individuals, self.genome_identifier)
-                self.genomes += species.children
-
-            print(len(self.genomes))
+                # self.genomes += species.children
+                for genome in species.elites:
+                    self.genomes.append(genome)
+                for genome in species.children:
+                    self.mutate_genome(genome)
+                    self.genomes.append(genome)
 
             # update loop conditions
             self.generations_run += 1
