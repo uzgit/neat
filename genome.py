@@ -385,29 +385,43 @@ class Genome:
         new_genome_node_identifiers += [edge.input_node_identifier for edge in new_genome_edges if edge.output_node_identifier not in new_genome_node_identifiers]
         new_genome_node_identifiers += [edge.output_node_identifier for edge in new_genome_edges if edge.output_node_identifier not in new_genome_node_identifiers]
 
-        all_nodes = deepcopy(better_genome.nodes) + deepcopy(worse_genome.nodes)
+        hidden_nodes = deepcopy(better_genome.nodes) + deepcopy(worse_genome.nodes)
         better_genome_node_identifiers = [node.identifier for node in better_genome.nodes]
         worse_genome_node_identifiers = [node.identifier for node in worse_genome.nodes]
-        # randomly take nodes from each parent
+
         new_genome_nodes = []
-        for new_node_identifier in new_genome_node_identifiers:
 
-            new_node = None
+        # we must include all input and output nodes
+        # new_genome_nodes = []
+        # for node in [node for node in better_genome.nodes if node.is_input_node or node.is_output_node]:
+        #     new_genome_nodes.append(node)
+        #
+        # for new_node_identifier in new_genome_node_identifiers:
+        #
+        #     new_node = None
+        #
+        #     # if both genomes contain the node
+        #     if new_node_identifier in better_genome_node_identifiers and new_node_identifier in worse_genome_node_identifiers:
+        #
+        #         matching_node_1 =
+        #
+        #         if uniform(0, 1) < 0.5:
+        #             new_node = deepcopy([node for node in better_genome.nodes if node.identifier == new_node_identifier][0])
+        #         else:
+        #             new_node = deepcopy([node for node in worse_genome.nodes if node.identifier == new_node_identifier][0])
+        #
+        #     else:
+        #         new_node = deepcopy([node for node in all_nodes if node.identifier == new_node_identifier][0])
+        #
+        #     # if new_node not in new_genome_nodes:
+        #     new_genome_nodes.append(new_node)
+        #
+        # new_genome = Genome(new_genome_identifier, new_genome_nodes, new_genome_edges)
 
-            # if both genomes contain the node
-            if new_node_identifier in better_genome_node_identifiers and new_node_identifier in worse_genome_node_identifiers:
+        assert len([node for node in new_genome.nodes if node.is_input_node]) == len([node for node in genome1.nodes if node.is_input_node])
+        assert len([node for node in new_genome.nodes if node.is_output_node]) == len([node for node in genome1.nodes if node.is_output_node])
 
-                if uniform(0, 1) < 0.5:
-                    new_node = deepcopy([node for node in better_genome.nodes if node.identifier == new_node_identifier][0])
-                else:
-                    new_node = deepcopy([node for node in worse_genome.nodes if node.identifier == new_node_identifier][0])
-
-            else:
-                new_node = deepcopy([node for node in all_nodes if node.identifier == new_node_identifier])
-
-            new_genome_nodes.append(new_node)
-
-        return Genome(new_genome_identifier, new_genome_nodes, new_genome_edges)
+        return new_genome
 
     def num_hidden_nodes(self):
 

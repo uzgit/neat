@@ -1,6 +1,7 @@
 from random import *
 
 from globals import *
+from species import *
 from genome import *
 from neural_network import *
 
@@ -25,6 +26,7 @@ class Population:
         self.innovations = []
         ####################################################################
         self.genome_identifier = 1
+        self.next_species_identifier = 1
 
         self.population_size = population_size
         self.num_generations = num_generations
@@ -38,6 +40,8 @@ class Population:
         self.genomes = []
         self.species = []
         self.neural_networks = []
+
+        #self.champion = None
 
     def initialize_genomes(self):
 
@@ -108,7 +112,7 @@ class Population:
             #if successfully_mutated:
             num_mutations += 1
 
-    def run_with_local_fitness_function(self, evaluation_function, num_generations=None, fitness_goal=None, output_stream=None):
+    def run_with_local_fitness_function_deprecated(self, evaluation_function, num_generations=None, fitness_goal=None, output_stream=None):
 
         if num_generations == None:
             num_generations = self.num_generations
@@ -145,6 +149,75 @@ class Population:
             print("Best genome in generation {}: genome {}, fitness: {}".format(self.generations_run, sorted_genomes[0].identifier, sorted_genomes[0].fitness), file=output_stream)
 
         return sorted_genomes[0]
+
+    def run_with_local_fitness_function(self, evaluation_function, num_generations=None, fitness_goal=None, output_stream=None):
+
+        if num_generations == None:
+            num_generations = self.num_generations
+
+        print("Beginning run: {} members, {} generations, {} fitness goal.".format(self.population_size, num_generations, fitness_goal), file=output_stream)
+        print("genomes:", len(self.genomes))
+
+        self.initialize_genomes() # all genomes are either unconnected or fully connected
+        self.mutate_all_genomes() # randomize the genomes a bit
+
+        self.champion = deepcopy(self.genomes[0])
+
+        max_fitness = 0
+        self.generations_run = 0
+        while (self.generations_run < num_generations if num_generations != -1 else True) and (max_fitness < fitness_goal if fitness_goal is not None else True):
+
+            self.set_species()
+
+            self.neural_networks.clear()
+            for genome in self.genomes:
+                genome.fitness = 0
+                neural_network = FeedForwardNeuralNetwork(genome)
+                self.neural_networks.append(neural_network)
+
+            for neural_network in self.neural_networks:
+                evaluation_function(neural_network)
+
+            total_fitness = 0
+            for species in self.species:
+                species.step_generation()
+                total_fitness += species.fitness
+
+            self.genomes.sort(key=lambda genome: genome.fitness, reverse=True)
+            champion = deepcopy(self.genomes[0])
+            self.genomes.clear()
+
+            print(len(self.genomes))
+
+            for species in self.species:
+                num_individuals = int(self.population_size * species.fitness / total_fitness)
+                species.reproduce(num_individuals, self.genome_identifier)
+                self.genomes += species.children
+
+            print(len(self.genomes))
+
+            # update loop conditions
+            self.generations_run += 1
+            max_fitness = champion.fitness
+
+            if champion.fitness > self.champion.fitness:
+                self.champion = champion
+
+            print("Best genome in generation {}: genome {}, fitness: {}".format(self.generations_run, self.champion.identifier, self.champion.fitness),file=output_stream)
+
+        return self.champion
+
+    # assume empty species but full genome list
+    def set_species(self):
+
+        for genome in self.genomes:
+
+            compatible_species = ([species for species in self.species if species.is_compatible_with(genome)] + [None])[0]
+            if compatible_species is None:
+                self.species.append( Species(self.next_species_identifier, 1, genome) )
+                self.next_species_identifier += 1
+            else:
+                compatible_species.add_genome(genome)
 
     def set_innovation_number(self, edge):
 

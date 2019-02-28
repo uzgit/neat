@@ -152,3 +152,13 @@ from visualize import *
 #
 # print(best_genome)
 # print("fitness:", test_xor_print(best_neural_network))
+
+population = Population(150, 500, 2, 1, max_num_hidden_nodes=10, output_activation_function="binary_step")
+best_genome = population.run_with_local_fitness_function(test_xor, num_generations=1000, fitness_goal=4)
+best_neural_network = FeedForwardNeuralNetwork(best_genome)
+
+draw_neural_network_active(best_neural_network, "images/best_active")
+draw_neural_network_full(best_neural_network, "images/best_full")
+
+print(best_genome)
+print("fitness:", test_xor_print(best_neural_network))

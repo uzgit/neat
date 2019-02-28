@@ -166,6 +166,7 @@ class FeedForwardNeuralNetwork:
     def activate(self, inputs):
 
         assert len(inputs) == self.num_inputs, "Expected {} inputs but got {} inputs".format(self.num_inputs, len(inputs))
+        print(self)
 
         # clear all data
         for node in self.nodes:
