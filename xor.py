@@ -30,7 +30,7 @@ def test_xor(neural_network):
         if network_output == true_output:
             fitness += 1
 
-    neural_network.genome.fitness = fitness
+    return fitness
 
 def test_xor_print(neural_network):
 

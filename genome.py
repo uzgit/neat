@@ -5,6 +5,17 @@ import pickle
 from functions import *
 from globals import *
 
+mutations = {
+    "add node" : mutate_add_node_probability,
+    "remove node" : mutate_remove_node_probability,
+    "add edge" : mutate_add_edge_probability,
+    "remove edge" : mutate_remove_edge_probability,
+    "reset weight" : mutate_reset_weight_probability,
+    "scale weight" : mutate_scale_weight_probability,
+    "change aggregation function" : mutate_change_aggregation_function_probability,
+    "change activation function" : mutate_change_activation_function_probability,
+}
+
 class NodeGene:
 
     def __init__(self, identifier, aggregation_function=default_aggregation_function, activation_function=default_activation_function, is_input_node=False, is_output_node=False, is_enabled=True):
@@ -79,7 +90,7 @@ class EdgeGene:
 
 class Genome:
 
-    def __init__(self, identifier, nodes, edges):
+    def __init__(self, identifier, nodes, edges, max_num_hidden_nodes=default_max_num_hidden_nodes):
 
         assert len(nodes) > 0
 
@@ -87,6 +98,7 @@ class Genome:
         self.nodes = deepcopy(nodes)
         self.nodes.sort(key=lambda node: node.identifier)
         self.edges = deepcopy(edges)
+        self.max_num_hidden_nodes = max_num_hidden_nodes
 
         self.num_inputs  = len([node for node in self.nodes if node.is_input_node])
         self.num_outputs = len([node for node in self.nodes if node.is_output_node])
@@ -162,12 +174,14 @@ class Genome:
 
         return Genome(identifier, nodes, edges)
 
-    def mutate_add_node(self, new_node_identifier, innovation_number_1, innovation_number_2, disabled_edge_identifier=None, mode=None, new_node_aggregation_function=default_aggregation_function, new_node_activation_function=default_activation_function):
+    def mutate_add_node(self, new_node_identifier=None, innovation_number_1=None, innovation_number_2=None, disabled_edge_identifier=None, mode=None, new_node_aggregation_function=default_aggregation_function, new_node_activation_function=default_activation_function):
+
+        if new_node_identifier == None:
+            new_node_identifier = max([node.identifier for node in self.nodes] + [0]) + 1
 
         active_edges = [edge for edge in self.edges if edge.is_enabled]
 
-        new_edge_1 = None
-        new_edge_2 = None
+        # new_node = None
 
         if len(active_edges) > 0:
 
@@ -186,14 +200,17 @@ class Genome:
             new_node = NodeGene(new_node_identifier, new_node_aggregation_function, new_node_activation_function)
 
             # create two new edges
-            new_edge_1 = EdgeGene(innovation_number_1, innovation_number_1, disabled_edge.input_node_identifier, new_node.identifier, 1)
-            new_edge_2 = EdgeGene(innovation_number_2, innovation_number_2, new_node.identifier, disabled_edge.output_node_identifier, disabled_edge.weight)
+            new_edge_identifier = max([edge.identifier for edge in self.edges] + [0]) + 1
+            new_edge_1 = EdgeGene(new_edge_identifier, innovation_number_1, disabled_edge.input_node_identifier, new_node.identifier, 1)
+            new_edge_2 = EdgeGene(new_edge_identifier + 1, innovation_number_2, new_node.identifier, disabled_edge.output_node_identifier, disabled_edge.weight)
 
             self.nodes.append(new_node)
             self.edges.append(new_edge_1)
             self.edges.append(new_edge_2)
 
-        return new_edge_1, new_edge_2
+            return new_node
+
+        return False
 
     def mutate_remove_node(self, removed_node_identifier=None):
 
@@ -212,7 +229,10 @@ class Genome:
             for edge in removed_edges:
                 edge.is_enabled = False
 
-    def mutate_add_edge(self, new_edge_identifier, input_node_identifier=None, output_node_identifier=None, weight=None, weight_min=global_weight_min, weight_max=global_weight_max):
+    def mutate_add_edge(self, new_edge_identifier=None, input_node_identifier=None, output_node_identifier=None, weight=None, weight_min=global_weight_min, weight_max=global_weight_max):
+
+        if new_edge_identifier == None:
+            new_edge_identifier = max([edge.identifier for edge in self.edges] + [0]) + 1
 
         new_edge = False
 
@@ -352,6 +372,44 @@ class Genome:
             new_activation_function = choice(activation_function_names)
             mutated_node.activation_function = new_activation_function
 
+    def random_mutation(self):
+
+        # choose a mutation
+        random_number = uniform(0, 1)
+        possible_mutations = [mutation for mutation, probability in mutations.items() if random_number < probability]
+        mutation = choice(possible_mutations + [None])
+
+        if mutation == "add node" and self.num_hidden_nodes() < self.max_num_hidden_nodes:
+            mutation = self.mutate_add_node()
+            # have to set innovation numbers after this
+
+        elif mutation == "remove node" and self.num_hidden_nodes() > 0:
+            self.mutate_remove_node()
+
+        elif mutation == "add edge":
+            mutation = self.mutate_add_edge()
+
+        elif mutation == "remove edge" and self.num_edges() > 0:
+            self.mutate_remove_edge()
+
+        elif mutation == "reset weight" and self.num_edges() > 0:
+            self.mutate_reset_weight()
+
+        elif mutation == "scale weight" and self.num_edges() > 0:
+            self.mutate_scale_weight()
+
+        elif mutation == "change aggregation function" and self.num_hidden_nodes() > 0:
+            self.mutate_change_aggregation_function()
+
+        elif mutation == "change activation function" and self.num_hidden_nodes() > 0:
+            self.mutate_change_activation_function()
+
+        else:
+            mutation = None
+            # raise ValueError("Incorrect mutation requested: " + mutation)
+
+        return mutation
+
     @classmethod
     def crossover(cls, genome1, genome2, new_genome_identifier):
 
@@ -367,8 +425,9 @@ class Genome:
             worse_genome = genome1
 
         # crossover edges
+        # print("in crossover: better_genome.edges = {}".format(better_genome.edges))
         better_genome_edges = sorted(better_genome.edges, key=lambda edge : edge.innovation_number)
-        #better_genome_edge_innovation_numbers = [edge.innovation_number for edge in better_genome_edges]
+        # better_genome_edge_innovation_numbers = [edge.innovation_number for edge in better_genome_edges]
         worse_genome_edges = sorted(worse_genome.edges, key=lambda edge : edge.innovation_number)
         worse_genome_edge_innovation_numbers = [edge.innovation_number for edge in worse_genome_edges]
 
@@ -447,6 +506,10 @@ class Genome:
     def num_hidden_nodes(self):
 
         return len([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled])
+
+    def num_edges(self):
+
+        return len(self.edges)
 
     def save(self, filename):
 

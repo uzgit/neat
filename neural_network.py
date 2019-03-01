@@ -207,6 +207,14 @@ class FeedForwardNeuralNetwork:
 
         return representation
 
+    def num_nodes(self):
+
+        return len(self.nodes)
+
+    def num_edges(self):
+
+        return len(self.edges)
+
     def str(self):
 
         return self.__str__()

@@ -56,6 +56,12 @@ output_node_attributes = \
         "color": "red",
     }
 
+invisible_edge_attributes = \
+    {
+        "style" : "invisible",
+        "arrowhead" : "none",
+    }
+
 def label(node):
 
     representation = ""
@@ -86,7 +92,6 @@ def draw_neural_network_active(network, filename=None):
         output_node_subgraph.node(str(output_node.identifier), xlabel=str(output_node.identifier), label=label(output_node), _attributes=output_node_attributes)
 
     # draw enabled edges
-    #for edge in [edge for edge in network.genome.edges if edge.is_enabled]:
     for edge in [edge for edge in network.edges]:
 
         style = "solid"
@@ -95,6 +100,23 @@ def draw_neural_network_active(network, filename=None):
 
         graph.edge(str(edge.input_node_identifier), str(edge.output_node_identifier),
                    _attributes={"style": style, "color": color, "label": str("%0.2f" % edge.weight), "fontsize" : fontsize})
+
+    input_nodes = [node for node in network.genome.nodes if node.is_input_node]
+    hidden_nodes = [node for node in network.genome.nodes if not node.is_input_node and not node.is_output_node]
+    output_nodes = [node for node in network.genome.nodes if node.is_output_node]
+    if network.genome.num_hidden_nodes() > 0:
+
+        for input_node in input_nodes:
+            for hidden_node in hidden_nodes:
+                graph.edge(str(input_node.identifier), str(hidden_node.identifier), _attributes=invisible_edge_attributes)
+
+        for hidden_node in hidden_nodes:
+            for output_node in output_nodes:
+                graph.edge(str(hidden_node.identifier), str(output_node.identifier), _attributes=invisible_edge_attributes)
+    else:
+        for input_node in input_nodes:
+            for output_node in output_nodes:
+                graph.edge(str(input_node.identifier), str(output_node.identifier), _attributes=invisible_edge_attributes)
 
     graph.subgraph(input_node_subgraph)
     graph.subgraph(hidden_node_subgraph)
@@ -142,6 +164,24 @@ def draw_neural_network_full(network, filename=None):
 
         graph.edge(str(edge.input_node_identifier), str(edge.output_node_identifier),
                    _attributes={"style":style, "color":color, "label":str("%0.2f" % edge.weight), "fontsize":fontsize,})
+
+    # draw invisible edges between input nodes, hidden nodes, and output nodes
+    input_nodes = [node for node in network.genome.nodes if node.is_input_node]
+    hidden_nodes = [node for node in network.genome.nodes if not node.is_input_node and not node.is_output_node]
+    output_nodes = [node for node in network.genome.nodes if node.is_output_node]
+    if network.genome.num_hidden_nodes() > 0:
+
+        for input_node in input_nodes:
+            for hidden_node in hidden_nodes:
+                graph.edge(str(input_node.identifier), str(hidden_node.identifier), _attributes=invisible_edge_attributes)
+
+        for hidden_node in hidden_nodes:
+            for output_node in output_nodes:
+                graph.edge(str(hidden_node.identifier), str(output_node.identifier), _attributes=invisible_edge_attributes)
+    else:
+        for input_node in input_nodes:
+            for output_node in output_nodes:
+                graph.edge(str(input_node.identifier), str(output_node.identifier), _attributes=invisible_edge_attributes)
 
     graph.subgraph(input_node_subgraph)
     graph.subgraph(hidden_node_subgraph)
