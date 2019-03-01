@@ -172,37 +172,38 @@ from visualize import *
 
 
 population = Population(10, 500, 2, 1, max_num_hidden_nodes=10, output_activation_function="binary_step")
-population.initialize_genomes()
-population.initial_mutation()
-
-population.set_species()
-print("num species: {}".format(population.num_species()))
-print("num individuals: {}".format(population.size()))
-
-for genome in population.genomes:
-    # genome.fitness = randint(1, 20)
-    genome.fitness = 1
-
-population.set_species_fitnesses()
-population.step_generation()
-
-num_species_individuals = 0
-for species in population.species:
-    for genome in species.genomes:
-        num_species_individuals += 1
-print("num individuals available through species: {}".format(num_species_individuals))
-
-for species in population.species:
-    for genome in species.genomes:
-        neural_network = FeedForwardNeuralNetwork(genome)
-        draw_neural_network_full( neural_network, "images/nerual_network_{}_{}".format(species.identifier, genome.identifier))
-
-# best_genome = population.run_with_local_fitness_function(test_xor)#, num_generations=1000, fitness_goal=4)
-# best_neural_network = FeedForwardNeuralNetwork(best_genome)
+###########################################################################################################
+# population.initialize_genomes()
+# population.initial_mutation()
 #
-# draw_neural_network_active(best_neural_network, "images/best_active")
-# draw_neural_network_full(best_neural_network, "images/best_full")
+# population.set_species()
+# print("num species: {}".format(population.num_species()))
+# print("num individuals: {}".format(population.size()))
 #
-# print(best_genome)
-# print("fitness:", test_xor_print(best_neural_network))
+# for genome in population.genomes:
+#     # genome.fitness = randint(1, 20)
+#     genome.fitness = 1
+#
+# population.set_species_fitnesses()
+# population.step_generation()
+#
+# num_species_individuals = 0
+# for species in population.species:
+#     for genome in species.genomes:
+#         num_species_individuals += 1
+# print("num individuals available through species: {}".format(num_species_individuals))
+#
+# for species in population.species:
+#     for genome in species.genomes:
+#         neural_network = FeedForwardNeuralNetwork(genome)
+#         draw_neural_network_full( neural_network, "images/nerual_network_{}_{}".format(species.identifier, genome.identifier))
+###########################################################################################################
+best_genome = population.run_with_local_fitness_function(test_xor)#, num_generations=1000, fitness_goal=4)
+best_neural_network = FeedForwardNeuralNetwork(best_genome)
+
+draw_neural_network_active(best_neural_network, "images/best_active")
+draw_neural_network_full(best_neural_network, "images/best_full")
+
+print(best_genome)
+print("fitness:", test_xor_print(best_neural_network))
 

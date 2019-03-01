@@ -87,12 +87,12 @@ class Population:
         self.generations_run = 0
         while (self.generations_run < num_generations if num_generations != -1 else True) and (self.max_fitness() < fitness_goal if fitness_goal is not None else True):
 
-            print("Beginning generation {}.".format(self.generations_run + 1))
+            print("Beginning generation {} with {} individuals of {} species.".format(self.generations_run + 1, self.size(), self.num_species()))
 
             # self.set_species()
             self.remove_empty_species()
 
-            self.neural_networks.clear()
+            # self.neural_networks.clear()
             self.set_neural_networks()
             self.evaluate_neural_networks(evaluation_function)
             self.set_species_fitnesses()
@@ -106,7 +106,6 @@ class Population:
             for species in self.species:
                 print(species.information_entry(), file=output_stream)
             #######################################################################################
-
 
             # post-evalution metadata and cleanup
             generation_champion = self.get_generation_champion()
@@ -122,6 +121,11 @@ class Population:
                 print(file=output_stream)
             # else:
             #     raise RuntimeError("Serious error here.")
+
+            for genome in self.genomes:
+                for edge in genome.edges:
+                    if edge.innovation_number == None:
+                        self.set_innovation_number(edge)
 
         return self.champion
 
@@ -240,6 +244,7 @@ class Population:
 
     def set_neural_networks(self):
 
+        self.neural_networks.clear()
         for genome in self.genomes:
             genome.fitness = 0
             neural_network = FeedForwardNeuralNetwork(genome)
