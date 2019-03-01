@@ -73,7 +73,7 @@ class Population:
 
             self.set_innovation_number(result)
 
-    def run_with_local_fitness_function(self, evaluation_function, num_generations=None, fitness_goal=None, output_stream=None):
+    def run_with_local_fitness_function(self, evaluation_function, num_generations=None, fitness_goal=None, num_initial_mutations=default_num_initial_mutations, output_stream=None):
 
         if num_generations == None:
             num_generations = self.num_generations
@@ -84,7 +84,7 @@ class Population:
         print("Beginning run: {} members, {} generations, {} fitness goal.".format(self.population_size, num_generations, fitness_goal), file=output_stream)
 
         self.initialize_genomes() # all genomes are either unconnected or fully connected
-        for i in range(10):
+        for i in range(num_initial_mutations):
             self.initial_mutation()
         self.set_species()
         # self.mutate_all_genomes() # randomize the genomes a bit
@@ -227,7 +227,7 @@ class Population:
 
             # print("len species.children", len(species.genomes))
             for genome in species.genomes:
-                # self.mutate_genome(genome)
+                self.mutate_genome(genome)
                 self.genomes.append(genome)
                 # print("added genome {}".format(genome.identifier))
 

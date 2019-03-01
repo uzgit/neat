@@ -16,11 +16,14 @@ class Edge:
 
 class Node:
 
-    def __init__(self, identifier, aggregation_function, activation_function, layer=-1, outputs=None, is_input_node=False, is_output_node=False):
+    def __init__(self, identifier, aggregation_function, activation_function, layer=-1, outputs=None, is_input_node=False, is_output_node=False, bias=None):
 
         self.identifier = identifier
         self.aggregation_function = aggregation_function
         self.activation_function = activation_function
+
+        self.bias = bias
+
         self.layer = layer
 
         if outputs == None:
@@ -44,6 +47,10 @@ class Node:
 
     def aggregate(self):
         assert None not in self.inputs
+
+        if self.bias is not None:
+            self.add_input(self.bias)
+
         self.aggregation = aggregation_functions[self.aggregation_function](self.inputs)
         return self.aggregation
 
@@ -68,7 +75,7 @@ class Node:
 
     def __str__(self):
 
-        representation = "Node {} (layer {}), aggregation: {}, activation: {}, output links: ".format(self.identifier, self.layer, self.aggregation_function, self.activation_function)
+        representation = "Node {} (layer {}), aggregation: {}, bias: {}, activation: {}, output links: ".format(self.identifier, self.layer, self.aggregation_function, self.bias, self.activation_function)
 
         if len(self.outputs) == 0:
             representation += "[]"
@@ -120,7 +127,7 @@ class FeedForwardNeuralNetwork:
 
         # generate input nodes
         for input_node_gene in [node_gene for node_gene in self.genome.nodes if node_gene.is_input_node]:
-            new_input_node = Node(input_node_gene.identifier, input_node_gene.aggregation_function, input_node_gene.activation_function)
+            new_input_node = Node(input_node_gene.identifier, aggregation_function=input_node_gene.aggregation_function, bias=input_node_gene.bias, activation_function=input_node_gene.activation_function)
             new_input_node.is_input_node = True
             node_stack.append(new_input_node)
 
@@ -146,7 +153,7 @@ class FeedForwardNeuralNetwork:
                     if next_node_gene.identifier in [node.identifier for node in self.nodes]:
                         next_node = [node for node in self.nodes if node.identifier == next_node_gene.identifier][0]
                     else:
-                        next_node = Node(next_node_gene.identifier, next_node_gene.aggregation_function, next_node_gene.activation_function, is_output_node=next_node_gene.is_output_node)
+                        next_node = Node(next_node_gene.identifier, aggregation_function=next_node_gene.aggregation_function, bias=next_node_gene.bias, activation_function=next_node_gene.activation_function, is_output_node=next_node_gene.is_output_node)
                         self.nodes.append(next_node)
 
                     if next_node not in next_node_stack:

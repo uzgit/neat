@@ -8,17 +8,18 @@ from globals import *
 mutations = {
     "add node" : mutate_add_node_probability,
     "remove node" : mutate_remove_node_probability,
+    # "set bias" : mutate_set_bias_probability,
     "add edge" : mutate_add_edge_probability,
     "remove edge" : mutate_remove_edge_probability,
-    "reset weight" : mutate_reset_weight_probability,
+    # "reset weight" : mutate_reset_weight_probability,
     "scale weight" : mutate_scale_weight_probability,
-#     "change aggregation function" : mutate_change_aggregation_function_probability,
-#     "change activation function" : mutate_change_activation_function_probability,
+     # "change aggregation function" : mutate_change_aggregation_function_probability,
+     # "change activation function" : mutate_change_activation_function_probability,
 }
 
 class NodeGene:
 
-    def __init__(self, identifier, aggregation_function=default_aggregation_function, activation_function=default_activation_function, is_input_node=False, is_output_node=False, is_enabled=True):
+    def __init__(self, identifier, aggregation_function=default_aggregation_function, bias=None, activation_function=default_activation_function, is_input_node=False, is_output_node=False, is_enabled=True):
 
         self.identifier = identifier
         self.aggregation_function = aggregation_function
@@ -26,11 +27,22 @@ class NodeGene:
         self.is_input_node= is_input_node
         self.is_output_node = is_output_node
 
+        if self.is_input_node or self.is_output_node:
+            self.bias = 0
+        elif bias == None and random_initial_bias:
+            self.bias = uniform(initial_weight_min, initial_weight_max)
+        else:
+            self.bias = bias
+
         self.is_enabled = is_enabled
+
+        self.predecessors = []
+        self.successors = []
+        self.layer = None
 
     def __str__(self):
 
-        representation = "node {}: {}, {}".format(self.identifier, self.aggregation_function, self.activation_function)
+        representation = "node {}: {}, bias: {}, {}".format(self.identifier, self.aggregation_function, self.bias, self.activation_function)
 
         if not self.is_enabled:
             representation += " (disabled) "
@@ -105,6 +117,8 @@ class Genome:
 
         self.fitness = 0
 
+        self.set_topology()
+
     @classmethod
     def default(cls, identifier, num_inputs, num_outputs, num_hidden_nodes=0, aggregation_function=default_aggregation_function, activation_function=default_activation_function, input_aggregation_function=default_input_aggregation_function, input_activation_function=default_input_activation_function, output_activation_function=default_output_activation_function, mode=default_genome_mode, weights="randomized"):
 
@@ -174,6 +188,84 @@ class Genome:
 
         return Genome(identifier, nodes, edges)
 
+    def set_topology(self):
+
+        # clear topological data
+        for node in self.nodes:
+            node.predecessors.clear()
+            node.successors.clear()
+            node.layer = None
+
+        # set immediate predecessors and successors
+        for edge in self.edges:
+
+            if edge.is_enabled:
+
+                input_node = next(node for node in self.nodes if node.identifier == edge.input_node_identifier)
+                output_node = next(node for node in self.nodes if node.identifier == edge.output_node_identifier)
+
+                output_node.predecessors.append(input_node)
+                input_node.successors.append(output_node)
+
+        # set layers
+        for node in [node for node in self.nodes if node.is_input_node]:
+            node.layer = 1
+
+        outer_change_occurred = True
+        while outer_change_occurred:
+
+            outer_change_occurred = False
+
+            # forward layer determination
+            change_occurred = True
+            while change_occurred:
+                change_occurred = False
+
+                for node in self.nodes:
+
+                    predecessor_layers = [predecessor.layer for predecessor in node.predecessors if predecessor.layer is not None]
+                    if len(predecessor_layers) > 0:
+
+                        new_layer = max(predecessor_layers) + 1
+                        if node.layer != new_layer:
+                            node.layer = new_layer
+                            change_occurred = True
+                            outer_change_occurred = True
+
+            # backward layer determination
+            change_occurred = True
+            while change_occurred:
+                change_occurred = False
+
+                # only backwards propagate if the node behind has a bias of None (different from nonzero bias, as some activation functions do not pass through the origin)
+                for node in [node for node in self.nodes if node.layer is None and node.bias is not None]:
+
+                    successor_layers = [successor.layer for successor in node.successors if successor.layer is not None]
+                    if len(successor_layers) > 0:
+
+                        new_layer = min(successor_layers) - 1
+                        if node.layer != new_layer:
+
+                            node.layer = new_layer
+                            change_occurred = True
+                            outer_change_occurred = True
+
+        # set all predecessors
+        self.min_layer = min([node.layer for node in self.nodes if node.layer is not None])
+        self.max_layer = max([node.layer for node in self.nodes if node.layer is not None])
+        for current_layer in range(self.min_layer, self.max_layer + 1):
+
+            # accummulate predecessors
+            current_layer_nodes = [node for node in self.nodes if node.layer == current_layer]
+            for current_layer_node in current_layer_nodes:
+                for predecessor in current_layer_node.predecessors:
+
+                    current_layer_node.predecessors += [pre_predecessor for pre_predecessor in predecessor.predecessors if pre_predecessor not in current_layer_node.predecessors]
+
+        for node in self.nodes:
+            node.predecessors.sort(key=lambda predecessor : predecessor.identifier)
+            # print("node {} predecessors: {}".format(node.identifier, [predecessor.identifier for predecessor in node.predecessors]))
+
     def mutate_add_node(self, new_node_identifier=None, innovation_number_1=None, innovation_number_2=None, disabled_edge_identifier=None, mode=None, new_node_aggregation_function=default_aggregation_function, new_node_activation_function=default_activation_function):
 
         if new_node_identifier == None:
@@ -197,7 +289,7 @@ class Genome:
                 new_node_activation_function = choice(activation_function_names)
 
             # create a new node
-            new_node = NodeGene(new_node_identifier, new_node_aggregation_function, new_node_activation_function)
+            new_node = NodeGene(new_node_identifier, aggregation_function=new_node_aggregation_function, activation_function=new_node_activation_function)
 
             # create two new edges
             new_edge_identifier = max([edge.identifier for edge in self.edges] + [0]) + 1
@@ -207,6 +299,8 @@ class Genome:
             self.nodes.append(new_node)
             self.edges.append(new_edge_1)
             self.edges.append(new_edge_2)
+
+            self.set_topology()
 
             return new_node
 
@@ -229,7 +323,114 @@ class Genome:
             for edge in removed_edges:
                 edge.is_enabled = False
 
+        self.set_topology()
+
+    def mutate_set_bias(self, node=None, bias=None):
+
+        if node == None:
+            node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node])
+
+        if bias == None:
+            new_bias = uniform(global_bias_min, global_bias_max)
+        else:
+            new_bias = bias
+
+        node.bias = new_bias
+
+    def mutate_add_edge_deprecated_2(self, new_edge_identifier=None, input_node_identifier=None, output_node_identifier=None, weight=None, weight_min=global_weight_min, weight_max=global_weight_max):
+
+        if new_edge_identifier == None:
+            new_edge_identifier = max([edge.identifier for edge in self.edges] + [0]) + 1
+
+        possible_input_nodes  = [node for node in self.nodes if not node.is_output_node and node.is_enabled]
+        possible_output_nodes = [node for node in self.nodes if not node.is_input_node and node.is_enabled]
+
+        shuffle(possible_input_nodes)
+        shuffle(possible_output_nodes)
+
+        new_node_identifiers = None
+        input_node_index = 0
+        output_node_index = 0
+        found_edge = False
+        while input_node_index < len(possible_input_nodes) and not found_edge:
+            possible_input_node = possible_input_nodes[input_node_index]
+
+            while output_node_index < len(possible_output_nodes) and not found_edge:
+                possible_output_node = possible_output_nodes[output_node_index]
+
+                if possible_output_node not in possible_input_node.predecessors:
+
+                    matching_edge = ([edge for edge in self.edges if edge.input_node_identifier == possible_input_node.identifier and edge.output_node_identifier == possible_output_node.identifier and edge.is_enabled] + [None])[0]
+                    if matching_edge is None:
+
+                        new_node_identifiers = [possible_input_node.identifier, possible_output_node.identifier]
+                        found_edge = True
+
+                output_node_index += 1
+
+            input_node_index += 1
+
+        if new_node_identifiers is not None:
+
+            if weight == None:
+                weight = uniform(weight_min, weight_max)
+
+            new_edge = EdgeGene(new_edge_identifier, None, new_node_identifiers[0], new_node_identifiers[1], weight)
+            self.edges.append(new_edge)
+
+            self.set_topology()
+
+        else:
+            new_edge = None
+
+        return new_edge
+
     def mutate_add_edge(self, new_edge_identifier=None, input_node_identifier=None, output_node_identifier=None, weight=None, weight_min=global_weight_min, weight_max=global_weight_max):
+
+        if new_edge_identifier == None:
+            new_edge_identifier = max([edge.identifier for edge in self.edges] + [0]) + 1
+
+        possible_input_nodes  = [node for node in self.nodes if not node.is_output_node and node.is_enabled]
+        possible_output_nodes = [node for node in self.nodes if not node.is_input_node and node.is_enabled]
+
+        theoretically_possible_edges = []
+        for possible_input_node in possible_input_nodes:
+            for possible_output_node in possible_output_nodes:
+
+                edge = [possible_input_node.identifier, possible_output_node.identifier]
+
+                if possible_input_node is not possible_output_node and edge not in theoretically_possible_edges:
+                    theoretically_possible_edges.append(edge)
+
+        impossible_edges = []
+        for edge in self.edges:
+            impossible_edges.append([edge.input_node_identifier, edge.output_node_identifier])
+        for node in self.nodes:
+            for predecessor in node.predecessors:
+
+                edge = [node.identifier, predecessor.identifier]
+                if edge not in impossible_edges:
+                    impossible_edges.append(edge)
+
+        possible_edges = [edge for edge in theoretically_possible_edges if edge not in impossible_edges and edge]
+
+        new_node_identifiers = choice(possible_edges + [None])
+
+        if new_node_identifiers is not None:
+
+            if weight == None:
+                weight = uniform(weight_min, weight_max)
+
+            new_edge = EdgeGene(new_edge_identifier, None, new_node_identifiers[0], new_node_identifiers[1], weight)
+            self.edges.append(new_edge)
+            self.set_topology()
+
+        else:
+            new_edge = None
+
+        return new_edge
+
+    def mutate_add_edge_deprecated(self, new_edge_identifier=None, input_node_identifier=None, output_node_identifier=None, weight=None, weight_min=global_weight_min, weight_max=global_weight_max):
 
         if new_edge_identifier == None:
             new_edge_identifier = max([edge.identifier for edge in self.edges] + [0]) + 1
@@ -311,6 +512,8 @@ class Genome:
         if new_edge is not None:
             self.edges.append(new_edge)
 
+        self.set_topology()
+
         return new_edge
 
     def mutate_remove_edge(self, removed_edge_identifier=None):
@@ -322,6 +525,8 @@ class Genome:
 
         if removed_edge is not None:
             removed_edge.is_enabled = False
+
+        self.set_topology()
 
         return removed_edge
 
@@ -385,6 +590,9 @@ class Genome:
 
         elif mutation == "remove node" and self.num_hidden_nodes() > 0:
             self.mutate_remove_node()
+
+        elif mutation == "set bias" and self.num_hidden_nodes() > 0:
+            self.mutate_set_bias()
 
         elif mutation == "add edge":
             mutation = self.mutate_add_edge()

@@ -65,7 +65,8 @@ invisible_edge_attributes = \
 def label(node):
 
     representation = ""
-    representation += aggregation_function_label_names[node.aggregation_function]
+    representation += str(node.layer)
+    representation += "\n" + aggregation_function_label_names[node.aggregation_function] + ", " + str(round(node.bias, 1))
     representation += "\n" + activation_function_label_names[node.activation_function]
 
     return representation
