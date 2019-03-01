@@ -1,4 +1,5 @@
 from random import *
+import sys
 
 from globals import *
 from species import *
@@ -19,7 +20,7 @@ mutations = {
 
 class Population:
 
-    def __init__(self, population_size, num_generations, num_inputs, num_outputs, initial_num_hidden_nodes=0, max_num_hidden_nodes=default_max_num_hidden_nodes, output_activation_function=default_output_activation_function, mode="unconnected"):
+    def __init__(self, population_size, num_generations, num_inputs, num_outputs, initial_num_hidden_nodes=0, max_num_hidden_nodes=default_max_num_hidden_nodes, output_activation_function=default_output_activation_function, mode="unconnected", output_stream=sys.stdout):
 
         self.next_innovation_number = 1
         ####################################################################
@@ -36,6 +37,8 @@ class Population:
         self.max_num_hidden_nodes = max_num_hidden_nodes
         self.mode = mode
         self.output_activation_function = output_activation_function
+
+        self.output_stream = output_stream
 
         self.genomes = []
         self.species = []
@@ -75,10 +78,14 @@ class Population:
         if num_generations == None:
             num_generations = self.num_generations
 
+        if output_stream is None:
+            output_stream = self.output_stream
+
         print("Beginning run: {} members, {} generations, {} fitness goal.".format(self.population_size, num_generations, fitness_goal), file=output_stream)
 
         self.initialize_genomes() # all genomes are either unconnected or fully connected
-        self.initial_mutation()
+        for i in range(10):
+            self.initial_mutation()
         self.set_species()
         # self.mutate_all_genomes() # randomize the genomes a bit
 
@@ -99,6 +106,9 @@ class Population:
 
             # report species
             #######################################################################################
+            for i in range(6 + 6 + 10 + 15):
+                print("-", end="", file=output_stream)
+            print(file=output_stream)
             print("%-6s%6s%10s%14s" % ("Species", "Age", "Members", "Fitness"), file=output_stream)
             for i in range(6 + 6 + 10 + 15):
                 print("-", end="", file=output_stream)
@@ -115,10 +125,9 @@ class Population:
             # update loop conditions
             self.generations_run += 1
 
-            if generation_champion.fitness > self.champion.fitness:
+            if generation_champion.fitness >= self.champion.fitness:
                 self.champion = generation_champion
-                print("Best genome in generation {}: genome {}, fitness: {}".format(self.generations_run, generation_champion.identifier, generation_champion.fitness),file=output_stream)
-                print(file=output_stream)
+                print("Best genome in generation {}: genome {}, fitness: {}".format(self.generations_run, generation_champion.identifier, generation_champion.fitness),file=output_stream, end="\n\n")
             # else:
             #     raise RuntimeError("Serious error here.")
 
@@ -132,7 +141,8 @@ class Population:
     def step_generation(self):
 
         self.genomes.clear()
-        self.remove_stagnated_species()
+        if self.num_species() > 1:
+            self.remove_stagnated_species()
         self.set_total_fitness()
         self.step_species_generation()
         self.species_reproduce()
@@ -195,6 +205,8 @@ class Population:
         for species in self.species:
 
             if species.is_stagnated() or species.size() == 0:
+
+                print("Removing stagnated species {}.".format(species.identifier), file=self.output_stream)
                 self.species.remove(species)
 
     def step_species_generation(self):
@@ -213,7 +225,7 @@ class Population:
             for genome in species.elites:
                 self.genomes.append(genome)
 
-            print("len species.children", len(species.genomes))
+            # print("len species.children", len(species.genomes))
             for genome in species.genomes:
                 # self.mutate_genome(genome)
                 self.genomes.append(genome)
@@ -222,6 +234,11 @@ class Population:
     def species_reproduce(self):
 
         total_children_requested = 0
+
+        # num_children_array = []
+        # for species in self.species:
+        #     num_children_array.append(round(self.population_size * species.fitness / self.total_fitness))
+        # print("num children array:", num_children_array)
 
         for species in self.species:
 
@@ -240,7 +257,7 @@ class Population:
             for genome in species.misfits:
                 self.misfits.append(genome)
 
-        print("total_children_requested", total_children_requested)
+        # print("total_children_requested", total_children_requested)
 
     def set_neural_networks(self):
 
@@ -274,7 +291,7 @@ class Population:
 
     def set_total_fitness(self):
 
-        total_fitness = sum( [species.average_fitness() for species in self.species if not species.is_stagnated()] )
+        total_fitness = sum( [species.average_fitness() for species in self.species] )
 
         if total_fitness == 0:
             total_fitness = 1

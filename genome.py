@@ -12,8 +12,8 @@ mutations = {
     "remove edge" : mutate_remove_edge_probability,
     "reset weight" : mutate_reset_weight_probability,
     "scale weight" : mutate_scale_weight_probability,
-    "change aggregation function" : mutate_change_aggregation_function_probability,
-    "change activation function" : mutate_change_activation_function_probability,
+#     "change aggregation function" : mutate_change_aggregation_function_probability,
+#     "change activation function" : mutate_change_activation_function_probability,
 }
 
 class NodeGene:

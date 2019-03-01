@@ -25,8 +25,8 @@ class Species:
     def step_generation(self):
 
         # set fitness metadata
-        self.fitness = max([genome.fitness for genome in self.genomes] + [0])
-        self.fitness_history.append( self.fitness )
+        # self.fitness = max([genome.fitness for genome in self.genomes] + [0])
+        # self.fitness_history.append( self.fitness )
 
         # sort genomes by fitness descending
         self.genomes.sort(key=lambda genome: genome.fitness, reverse=True)
@@ -186,4 +186,4 @@ class Species:
 
     def information_entry(self):
 
-        return "%6s%6s%10s%15s" % (self.identifier, len(self.fitness_history), len(self.genomes), self.fitness)
+        return "%6s%6s%10s%15s" % (self.identifier, len(self.fitness_history), len(self.genomes), round(self.fitness, 2))

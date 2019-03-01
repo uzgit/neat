@@ -171,7 +171,7 @@ from visualize import *
 #     # draw_neural_network_full( neural_network, "images/nerual_network_{}".format(i))
 
 
-population = Population(10, 500, 2, 1, max_num_hidden_nodes=10, output_activation_function="binary_step")
+population = Population(150, 200, 2, 1, max_num_hidden_nodes=10, output_activation_function="sigmoid", output_stream=sys.stdout)
 ###########################################################################################################
 # population.initialize_genomes()
 # population.initial_mutation()
@@ -198,7 +198,7 @@ population = Population(10, 500, 2, 1, max_num_hidden_nodes=10, output_activatio
 #         neural_network = FeedForwardNeuralNetwork(genome)
 #         draw_neural_network_full( neural_network, "images/nerual_network_{}_{}".format(species.identifier, genome.identifier))
 ###########################################################################################################
-best_genome = population.run_with_local_fitness_function(test_xor)#, num_generations=1000, fitness_goal=4)
+best_genome = population.run_with_local_fitness_function(test_xor_sigmoid)#, num_generations=1000, fitness_goal=4)
 best_neural_network = FeedForwardNeuralNetwork(best_genome)
 
 draw_neural_network_active(best_neural_network, "images/best_active")

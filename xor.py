@@ -13,6 +13,27 @@ def xor(inputs):
 
     return result
 
+def test_xor_sigmoid(neural_network):
+
+    fitness = 4
+
+    for i in range(4):
+
+        input_1 = 1 if i > 1 else 0
+        input_2 = i % 2
+
+        inputs = [input_1, input_2]
+
+        network_output = neural_network.activate(inputs)
+        true_output = xor(inputs)
+
+        if network_output == []:
+            fitness -= true_output[0]
+        else:
+            fitness -= (network_output[0] - true_output[0]) ** 2
+
+    return fitness
+
 def test_xor(neural_network):
 
     fitness = 0
