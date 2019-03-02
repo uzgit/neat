@@ -51,7 +51,7 @@ class Population:
 
         for i in range(self.population_size):
 
-            self.misfits.append(Genome.default(self.next_genome_identifier, self.num_inputs, self.num_outputs, self.initial_num_hidden_nodes, output_activation_function=self.output_activation_function, mode=self.mode))
+            self.misfits.append(Genome.default(self.next_genome_identifier, self.num_inputs, self.num_outputs, self.initial_num_hidden_nodes, output_activation_function=self.output_activation_function, mode=self.mode, max_num_hidden_nodes=self.max_num_hidden_nodes))
             self.next_genome_identifier += 1
 
     def initial_mutation(self):
@@ -218,19 +218,19 @@ class Population:
 
             species.step_generation()
 
-            num_individuals = round(self.population_size * species.fitness / self.total_fitness)
-            # print("args: self.population_size={}, species.fitness={}, self.total_fitness={}, raw_num_children={}, num_children={}".format(self.population_size, species.fitness, self.total_fitness, round(self.population_size * species.fitness / self.total_fitness), num_individuals))
-            children_generated = species.reproduce(num_individuals, self.next_genome_identifier)
-            self.next_genome_identifier = children_generated
-
-            for genome in species.elites:
-                self.genomes.append(genome)
-
-            # print("len species.children", len(species.genomes))
-            for genome in species.genomes:
-                self.mutate_genome(genome)
-                self.genomes.append(genome)
-                # print("added genome {}".format(genome.identifier))
+            # num_individuals = round(self.population_size * species.fitness / self.total_fitness)
+            # # print("args: self.population_size={}, species.fitness={}, self.total_fitness={}, raw_num_children={}, num_children={}".format(self.population_size, species.fitness, self.total_fitness, round(self.population_size * species.fitness / self.total_fitness), num_individuals))
+            # children_generated = species.reproduce(num_individuals, self.next_genome_identifier)
+            # self.next_genome_identifier = children_generated
+            #
+            # for genome in species.elites:
+            #     self.genomes.append(genome)
+            #
+            # # print("len species.children", len(species.genomes))
+            # for genome in species.genomes:
+            #     self.mutate_genome(genome)
+            #     self.genomes.append(genome)
+            #     # print("added genome {}".format(genome.identifier))
 
     def species_reproduce(self):
 
@@ -241,11 +241,24 @@ class Population:
         #     num_children_array.append(round(self.population_size * species.fitness / self.total_fitness))
         # print("num children array:", num_children_array)
 
+        # equal_numbers = False
+        # fitnesses = [0 == species.fitness for species in self.species]
+        # print(fitnesses)
+        # if all(fitnesses):
+        #     equal_numbers = True
+        # print(equal_numbers)
+
         for species in self.species:
 
+            # if equal_numbers:
+            #     num_children = round(self.population_size / len(self.species))
+            # else:
+            #     num_children = round(self.population_size * species.fitness / self.total_fitness)
+
             num_children = round(self.population_size * species.fitness / self.total_fitness)
+
             total_children_requested += num_children
-            # print("args: self.population_size={}, species.fitness={}, self.total_fitness={}, raw_num_children={}, num_children={}".format(self.population_size, species.fitness, self.total_fitness, round(self.population_size * species.fitness / self.total_fitness), num_children))
+            # print("args: self.population_size={}, len(self.genomes)={}, species.fitness={}, self.total_fitness={}, raw_num_children={}, num_children={}".format(self.population_size, len(self.genomes), species.fitness, self.total_fitness, round(self.population_size * species.fitness / self.total_fitness), num_children))
             children_generated = species.reproduce(num_children, self.next_genome_identifier)
             self.next_genome_identifier = children_generated
 
@@ -257,10 +270,11 @@ class Population:
                 self.genomes.append(genome)
 
             for genome in species.misfits:
+                # print("categorizing misfit {}".format(genome.identifier))
                 self.mutate_genome(genome)
                 self.misfits.append(genome)
 
-        # print("total_children_requested", total_children_requested)
+        print("total_children_requested: {}, number of genomes existing: {}".format(total_children_requested, len(self.genomes)))
 
     def set_neural_networks(self):
 

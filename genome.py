@@ -11,7 +11,7 @@ mutations = {
     "set bias" : mutate_set_bias_probability,
     "add edge" : mutate_add_edge_probability,
     "remove edge" : mutate_remove_edge_probability,
-    # "reset weight" : mutate_reset_weight_probability,
+    "reset weight" : mutate_reset_weight_probability,
     "scale weight" : mutate_scale_weight_probability,
      "change aggregation function" : mutate_change_aggregation_function_probability,
      "change activation function" : mutate_change_activation_function_probability,
@@ -129,7 +129,7 @@ class Genome:
         self.set_topology()
 
     @classmethod
-    def default(cls, identifier, num_inputs, num_outputs, num_hidden_nodes=0, aggregation_function=default_aggregation_function, activation_function=default_activation_function, input_aggregation_function=default_input_aggregation_function, input_activation_function=default_input_activation_function, output_activation_function=default_output_activation_function, mode=default_genome_mode, weights="randomized"):
+    def default(cls, identifier, num_inputs, num_outputs, num_hidden_nodes=0, aggregation_function=default_aggregation_function, activation_function=default_activation_function, input_aggregation_function=default_input_aggregation_function, input_activation_function=default_input_activation_function, output_activation_function=default_output_activation_function, mode=default_genome_mode, weights="randomized", max_num_hidden_nodes=default_max_num_hidden_nodes):
 
         nodes = []
         edges = []
@@ -195,7 +195,7 @@ class Genome:
                         edge_identifier   += 1
                         innovation_number += 1
 
-        return Genome(identifier, nodes, edges)
+        return Genome(identifier, nodes, edges, max_num_hidden_nodes=max_num_hidden_nodes)
 
     def set_topology(self):
 
@@ -457,10 +457,45 @@ class Genome:
 
     def random_mutation(self):
 
+        possible_mutations = mutations.copy()
+
+        if "add node" in possible_mutations and self.num_hidden_nodes() >= self.max_num_hidden_nodes:
+            possible_mutations.pop("add node")
+
+        if "remove node" in possible_mutations and self.num_hidden_nodes() == 0:
+            possible_mutations.pop("remove node")
+
+        if "set bias" in possible_mutations and self.num_hidden_nodes() == 0:
+            possible_mutations.pop("set bias")
+
+        if "change aggregation function" in possible_mutations and self.num_hidden_nodes() == 0:
+            possible_mutations.pop("change aggregation function")
+
+        if "change activation function" in possible_mutations and self.num_hidden_nodes() == 0:
+            possible_mutations.pop("change activation function")
+
+        if "add edge" in possible_mutations and len(self.possible_new_edges) == 0:
+            possible_mutations.pop("add edge")
+
+        if "remove edge" in possible_mutations and self.num_edges() == 0:
+            possible_mutations.pop("remove edge")
+
+        if "reset weight" in possible_mutations and self.num_edges() == 0:
+            possible_mutations.pop("reset weight")
+
+        if "scale weight" in possible_mutations and self.num_edges() == 0:
+            possible_mutations.pop("scale weight")
+
+        if len(possible_mutations) == 0:
+            return None
+
+        # get max probability in mutation probabilities, so that we can ensure that at least one mutation will occur
+        max_probability = max(list(possible_mutations.values()))
+
         # choose a mutation
-        random_number = uniform(0, 1)
-        possible_mutations = [mutation for mutation, probability in mutations.items() if random_number < probability]
-        mutation = choice(possible_mutations + [None])
+        random_number = uniform(0, max_probability - 0.01)
+        new_possible_mutations = [mutation for mutation, probability in possible_mutations.items() if random_number < probability]
+        mutation = choice(new_possible_mutations)
 
         if mutation == "add node" and self.num_hidden_nodes() < self.max_num_hidden_nodes:
             mutation = self.mutate_add_node()
@@ -473,7 +508,7 @@ class Genome:
         elif mutation == "set bias" and self.num_hidden_nodes() > 0:
             self.mutate_set_bias()
 
-        elif mutation == "add edge":
+        elif mutation == "add edge" and len(self.possible_new_edges) > 0:
             mutation = self.mutate_add_edge()
             # have to set innovation numbers after this
             # this is done on the population level
@@ -494,8 +529,8 @@ class Genome:
             self.mutate_change_activation_function()
 
         else:
+            raise ValueError("Incorrect mutation requested: " + str(mutation))
             mutation = None
-            # raise ValueError("Incorrect mutation requested: " + mutation)
 
         return mutation
 
@@ -522,6 +557,7 @@ class Genome:
         new_genome_edges = []
         for better_genome_edge in better_genome_edges:
             if better_genome_edge.innovation_number in worse_genome_edge_innovation_numbers:
+
                 worse_genome_edge = [edge for edge in worse_genome_edges if better_genome_edge.innovation_number == edge.innovation_number][0]
 
                 new_edge = deepcopy(choice([better_genome_edge, worse_genome_edge]))
@@ -556,10 +592,18 @@ class Genome:
             if new_node not in new_genome_nodes:
                 new_genome_nodes.append(new_node)
 
-        new_genome = Genome(new_genome_identifier, new_genome_nodes, new_genome_edges)
+        new_genome = Genome(new_genome_identifier, new_genome_nodes, new_genome_edges, max_num_hidden_nodes=genome1.max_num_hidden_nodes)
 
         assert len([node for node in new_genome.nodes if node.is_input_node]) == len([node for node in genome1.nodes if node.is_input_node])
         assert len([node for node in new_genome.nodes if node.is_output_node]) == len([node for node in genome1.nodes if node.is_output_node])
+
+        # for edge1 in new_genome.edges:
+        #     for edge2 in new_genome.edges:
+        #
+        #         if edge1 is not edge2:
+        #
+        #             assert not ((edge1.input_node_identifier == edge2.input_node_identifier) and (edge1.output_node_identifier == edge2.output_node_identifier)), "{} and {}".format(edge1, edge2)
+        #             new_genome.edges.remove(edge2)
 
         return new_genome
 
@@ -607,7 +651,23 @@ class Genome:
 
         denominator += edge_gene_similarity_coefficient * max(len(self.edges), len(genome.edges))
 
-        return numerator / denominator
+        similarity = numerator / denominator
+
+        # print(similarity)
+
+        return similarity
+
+    def contains_edge(self, input_node_identifier, output_node_identifier):
+
+        result = None
+
+        matching_edge = ([edge for edge in self.edges if edge.input_node_identifier == input_node_identifier and edge.output_node_identifier == output_node_identifier] + [None])[0]
+        if matching_edge == None:
+            result = True
+        else:
+            result = False
+
+        return result
 
     def __str__(self):
 

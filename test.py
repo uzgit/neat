@@ -92,10 +92,10 @@ from visualize import *
 # draw_neural_network_full(  neural_network2, "images/network_2_full")
 # draw_neural_network_active(neural_network2, "images/network 2")
 
-# genome2 = Genome.default(2, 2, 1, num_hidden_nodes=2)#, mode="fully connected")
-# # #
+# genome2 = Genome.default(2, 2, 1, num_hidden_nodes=1)#, mode="fully connected")
+# #
 # for i in range(50):
-#     genome2.random_mutation()
+    # genome2.random_mutation()
     # result = genome2.mutate_add_edge()
     # if result is not None:
     #     network3 = FeedForwardNeuralNetwork(genome2)
@@ -221,12 +221,32 @@ from visualize import *
 #         neural_network = FeedForwardNeuralNetwork(genome)
 #         draw_neural_network_full( neural_network, "images/nerual_network_{}_{}".format(species.identifier, genome.identifier))
 ###########################################################################################################
-population = Population(150, 50, 2, 1, initial_num_hidden_nodes=1, max_num_hidden_nodes=1, output_activation_function="sigmoid", output_stream=sys.stdout)
-best_genome = population.run_with_local_fitness_function(test_xor_sigmoid, num_generations=100, fitness_goal=4, num_initial_mutations=2)
+# population = Population(150, 50, 2, 1, initial_num_hidden_nodes=1, max_num_hidden_nodes=1, output_activation_function="binary_step", output_stream=sys.stdout)
+# best_genome = population.run_with_local_fitness_function(test_xor, num_generations=100, fitness_goal=4, num_initial_mutations=2)
+
+population = Population(150, 50, 2, 1, initial_num_hidden_nodes=1, max_num_hidden_nodes=1, output_activation_function="sigmoid", output_stream=sys.stdout, mode="fully connected")
+best_genome = population.run_with_local_fitness_function(test_xor_sigmoid, num_generations=100, fitness_goal=4, num_initial_mutations=1)
 best_neural_network = FeedForwardNeuralNetwork(best_genome)
 
-draw_neural_network_active(best_neural_network, "images/best_active")
+# draw_neural_network_active(best_neural_network, "images/best_active")
 draw_neural_network_full(best_neural_network, "images/best_full")
 
 print(best_genome)
-print("fitness:", test_xor_print(best_neural_network))
+print("fitness: {}".format(test_xor_sigmoid(best_neural_network)))
+
+test_xor_sigmoid_print(best_neural_network)
+
+input()
+
+for species in population.species:
+
+    draw_neural_network_full(FeedForwardNeuralNetwork(species.champion), "images/species_{}_champion".format(species.identifier))
+
+# desired_edges = [[1, 4], [2, 4]]
+# for genome in population.genomes:
+#
+#     result = all(genome.contains_edge(desired_edge[0], desired_edge[1]) for desired_edge in desired_edges)
+#
+#     if result:
+#         draw_neural_network_active(FeedForwardNeuralNetwork(genome), "images/test{}".format(genome.identifier))
+#         input()

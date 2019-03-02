@@ -33,16 +33,16 @@ default_genome_mode = "unconnected"
 #default_genome_mode = "fully connected"
 
 # variables for comparing genomes
-node_gene_similarity_coefficient = 0.6
+node_gene_similarity_coefficient = 0.5
 edge_gene_similarity_coefficient = 0.9
-edge_weight_similarity_coefficient = 0.2
+edge_weight_similarity_coefficient = 0.5
 
 # variables for mutating genomes
 max_num_mutations_per_individual_per_generation = 1
 mutate_add_node_probability = 0.2
 mutate_remove_node_probability = 0.1
 mutate_set_bias_probability = 0.2
-mutate_add_edge_probability = 0.6
+mutate_add_edge_probability = 0.9
 mutate_remove_edge_probability = 0.4
 mutate_reset_weight_probability = 0.2
 mutate_scale_weight_probability = 0.2
@@ -50,13 +50,13 @@ mutate_change_aggregation_function_probability = 0.05
 mutate_change_activation_function_probability = 0.05
 
 # variables for Species
-species_similarity_threshold = 0.7
+species_similarity_threshold = 1
 stagnation_time = 2000 # number of generations without fitness improvement before a species is considered stagnant
 elites_to_keep = 0 # doesn't work yet
 reproduction_elitism = 0.4 # percentage of individuals who will reproduce to create the next generation of the species
-species_average_fitness_time = 20 # numebr of generations over which to calculate average fitness
+species_average_fitness_time = 20 # number of generations over which to calculate average fitness
 
 # variables for Populations
 default_population_size = 150
 default_max_num_hidden_nodes = 10
-default_num_initial_mutations = 20
+default_num_initial_mutations = 1

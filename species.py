@@ -21,12 +21,9 @@ class Species:
         self.fitness_history = []
         self.fitness = None
         self.champion = deepcopy(genome)
+        self.representative = deepcopy(genome)
 
     def step_generation(self):
-
-        # set fitness metadata
-        # self.fitness = max([genome.fitness for genome in self.genomes] + [0])
-        # self.fitness_history.append( self.fitness )
 
         # sort genomes by fitness descending
         self.genomes.sort(key=lambda genome: genome.fitness, reverse=True)
@@ -38,8 +35,11 @@ class Species:
         for genome in self.genomes:
             self.ancestors.append(genome)
 
+        self.representative = choice(self.ancestors)
+
         # clear genomes
         self.genomes.clear()
+        self.misfits.clear()
 
     def reproduce(self, num_children, next_genome_identifier):
 
@@ -55,11 +55,6 @@ class Species:
 
         potential_parents = self.ancestors[0 : num_parents]
 
-        # print("in species: ancestors = {}".format(self.ancestors))
-        # print("in species: num_parents = {}".format(num_parents))
-        # print("in species: potential_parents = {}".format(potential_parents))
-        # print("in species: addresses: {}".format([id(ancestor) for ancestor in self.ancestors]))
-
         # create children
         for i in range(num_children):
 
@@ -74,56 +69,10 @@ class Species:
             # increment identifier
             next_genome_identifier += 1
 
-            # place child inside or outside the species based on its similarity to best-performing individual
-            # if self.champion.similarity(child) > species_similarity_threshold:
-            #     self.genomes.append(child)
-            # else:
-            #     self.misfits.append(child)
-            self.genomes.append(child)
-
-        return next_genome_identifier
-
-    def reproduce_deprecated(self, num_individuals, next_genome_identifier):
-
-        # Population will re-add genomes to species
-        self.genomes.clear()
-
-        sorted_ancestors = sorted(self.ancestors, key=lambda genome : genome.fitness)
-
-        num_parents = ceil(num_individuals * reproduction_elitism)
-
-        potential_parents = []
-        for i in range(min(num_parents, len(self.ancestors) - 1)):
-            if sorted_ancestors[i] not in potential_parents:
-                potential_parents.append(sorted_ancestors[i])
-
-        self.elites = []
-        for i in range(min(elites_to_keep, len(self.ancestors) - 1)):
-            self.elites.append(sorted_ancestors[i])
-            self.genomes.append(sorted_ancestors[i])
-
-        self.children.clear()
-        num_children = (num_individuals - elites_to_keep)
-        print("in Species.reproduce, num_parents={}, num_children={}".format(num_parents, num_children))
-        if num_children < 0:
-            num_children = 0
-
-        if len(potential_parents) > 1:
-            for i in range(num_children):
-
-                parent_1 = choice(potential_parents)
-                parent_2 = choice([parent for parent in potential_parents if parent is not parent_1])
-
-                new_genome = Genome.crossover(parent_1, parent_2, next_genome_identifier)
-                self.children.append(new_genome)
-
-                next_genome_identifier += 1
-
-        elif len(potential_parents) == 1:
-            new_genome = deepcopy(potential_parents[0])
-            self.children.append(new_genome)
-
-        print("num children: {}; made {} children".format(num_children, len(self.children)))
+            if self.is_compatible_with(child):
+                self.genomes.append(child)
+            else:
+                self.misfits.append(child)
 
         return next_genome_identifier
 
@@ -135,7 +84,7 @@ class Species:
 
         result = None
 
-        if self.champion.similarity(genome) > species_similarity_threshold:
+        if self.representative.similarity(genome) > species_similarity_threshold:
             result = True
         else:
             result = False
