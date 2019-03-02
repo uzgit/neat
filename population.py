@@ -86,8 +86,8 @@ class Population:
         self.initialize_genomes() # all genomes are either unconnected or fully connected
         for i in range(num_initial_mutations):
             self.initial_mutation()
+        # self.initial_mutation()
         self.set_species()
-        # self.mutate_all_genomes() # randomize the genomes a bit
 
         self.champion = deepcopy(self.genomes[0])
 
@@ -146,6 +146,7 @@ class Population:
         self.set_total_fitness()
         self.step_species_generation()
         self.species_reproduce()
+
         self.set_species()
 
     # assume empty species but full genome list
@@ -252,9 +253,11 @@ class Population:
                 self.genomes.append(genome)
 
             for genome in species.genomes:
+                self.mutate_genome(genome)
                 self.genomes.append(genome)
 
             for genome in species.misfits:
+                self.mutate_genome(genome)
                 self.misfits.append(genome)
 
         # print("total_children_requested", total_children_requested)

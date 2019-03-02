@@ -39,8 +39,8 @@ edge_weight_similarity_coefficient = 0.2
 
 # variables for mutating genomes
 max_num_mutations_per_individual_per_generation = 1
-mutate_add_node_probability = 0.7
-mutate_remove_node_probability = 0
+mutate_add_node_probability = 0.2
+mutate_remove_node_probability = 0.1
 mutate_set_bias_probability = 0.2
 mutate_add_edge_probability = 0.6
 mutate_remove_edge_probability = 0.4

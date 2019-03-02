@@ -92,21 +92,30 @@ from visualize import *
 # draw_neural_network_full(  neural_network2, "images/network_2_full")
 # draw_neural_network_active(neural_network2, "images/network 2")
 
-# genome2 = Genome.default(2, 5, 2, num_hidden_nodes=10)#, mode="fully connected")
-#
-# for i in range(15):
-#     genome2.mutate_add_edge()
-#
-# for i in range(10):
-#     genome2.mutate_remove_edge()
-#
-# for i in range(3):
-#     genome2.mutate_remove_node()
-#
-# for i in range(1):
-#     genome2.mutate_add_node()
-#
+# genome2 = Genome.default(2, 2, 1, num_hidden_nodes=2)#, mode="fully connected")
+# # #
+# for i in range(50):
+#     genome2.random_mutation()
+    # result = genome2.mutate_add_edge()
+    # if result is not None:
+    #     network3 = FeedForwardNeuralNetwork(genome2)
+    #     draw_neural_network_full(network3, "images/genome2_network_intermediate_{}".format(i))
+    #     input()
+# #
+# # for i in range(10):
+# #     genome2.mutate_remove_edge()
+# #
+# # for i in range(3):
+# #     genome2.mutate_remove_node()
+# #
+# # for i in range(1):
+# #     genome2.mutate_add_node()
+# #
 # print(genome2)
+#
+# for node in genome2.nodes:
+#     print("node {} predecessors: {}".format(node.identifier, [node.identifier for node in node.predecessors]))
+#     print("node {} successors: {}".format(node.identifier, [node.identifier for node in node.successors]))
 # network3 = FeedForwardNeuralNetwork(genome2)
 # draw_neural_network_full(network3)
 
@@ -185,7 +194,7 @@ from visualize import *
 #     # draw_neural_network_full( neural_network, "images/nerual_network_{}".format(i))
 
 
-population = Population(150, 50, 2, 1, max_num_hidden_nodes=10, output_activation_function="sigmoid", output_stream=sys.stdout)
+# population = Population(150, 50, 2, 1, max_num_hidden_nodes=1, output_activation_function="sigmoid", output_stream=sys.stdout)
 ###########################################################################################################
 # population.initialize_genomes()
 # population.initial_mutation()
@@ -212,7 +221,8 @@ population = Population(150, 50, 2, 1, max_num_hidden_nodes=10, output_activatio
 #         neural_network = FeedForwardNeuralNetwork(genome)
 #         draw_neural_network_full( neural_network, "images/nerual_network_{}_{}".format(species.identifier, genome.identifier))
 ###########################################################################################################
-best_genome = population.run_with_local_fitness_function(test_xor_sigmoid, num_generations=10, fitness_goal=4)
+population = Population(150, 50, 2, 1, initial_num_hidden_nodes=1, max_num_hidden_nodes=1, output_activation_function="sigmoid", output_stream=sys.stdout)
+best_genome = population.run_with_local_fitness_function(test_xor_sigmoid, num_generations=100, fitness_goal=4, num_initial_mutations=2)
 best_neural_network = FeedForwardNeuralNetwork(best_genome)
 
 draw_neural_network_active(best_neural_network, "images/best_active")
@@ -220,4 +230,3 @@ draw_neural_network_full(best_neural_network, "images/best_full")
 
 print(best_genome)
 print("fitness:", test_xor_print(best_neural_network))
-

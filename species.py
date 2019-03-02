@@ -69,7 +69,7 @@ class Species:
 
             # create a new child
             child = Genome.crossover(parent_1, parent_2, next_genome_identifier)
-            child.random_mutation()
+            # child.random_mutation() ##############################################################
 
             # increment identifier
             next_genome_identifier += 1

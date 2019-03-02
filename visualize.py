@@ -86,7 +86,7 @@ def draw_neural_network_active(network, filename=None):
     for input_node in network.input_nodes:
         input_node_subgraph.node(str(input_node.identifier), xlabel=str(input_node.identifier), label=label(input_node), _attributes=input_node_attributes)
 
-    for hidden_node in network.hidden_nodes:
+    for hidden_node in [node for node in network.hidden_nodes if node.layer is not None]:
         hidden_node_subgraph.node(str(hidden_node.identifier), xlabel=str(hidden_node.identifier), label=label(hidden_node),_attributes=hidden_node_attributes)
 
     for output_node in network.output_nodes:
