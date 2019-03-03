@@ -224,8 +224,8 @@ from visualize import *
 # population = Population(150, 50, 2, 1, initial_num_hidden_nodes=1, max_num_hidden_nodes=1, output_activation_function="binary_step", output_stream=sys.stdout)
 # best_genome = population.run_with_local_fitness_function(test_xor, num_generations=100, fitness_goal=4, num_initial_mutations=2)
 
-population = Population(150, 50, 2, 1, initial_num_hidden_nodes=1, max_num_hidden_nodes=1, output_activation_function="sigmoid", output_stream=sys.stdout, mode="fully connected")
-best_genome = population.run_with_local_fitness_function(test_xor_sigmoid, num_generations=100, fitness_goal=4, num_initial_mutations=1)
+population = Population(150, 50, 2, 1, initial_num_hidden_nodes=0, max_num_hidden_nodes=5, output_activation_function="sigmoid", output_stream=sys.stdout)#, mode="fully connected")
+best_genome = population.run_with_local_fitness_function(test_xor_sigmoid, num_generations=None, fitness_goal=3.8, num_initial_mutations=1)
 best_neural_network = FeedForwardNeuralNetwork(best_genome)
 
 # draw_neural_network_active(best_neural_network, "images/best_active")
@@ -235,12 +235,12 @@ print(best_genome)
 print("fitness: {}".format(test_xor_sigmoid(best_neural_network)))
 
 test_xor_sigmoid_print(best_neural_network)
-
-input()
-
-for species in population.species:
-
-    draw_neural_network_full(FeedForwardNeuralNetwork(species.champion), "images/species_{}_champion".format(species.identifier))
+#
+# input()
+#
+# for species in population.species:
+#
+#     draw_neural_network_full(FeedForwardNeuralNetwork(species.champion), "images/species_{}_champion".format(species.identifier))
 
 # desired_edges = [[1, 4], [2, 4]]
 # for genome in population.genomes:
@@ -250,3 +250,13 @@ for species in population.species:
 #     if result:
 #         draw_neural_network_active(FeedForwardNeuralNetwork(genome), "images/test{}".format(genome.identifier))
 #         input()
+
+# genome1 = Genome.default(1, 2, 1, 1, mode="fully connected")
+# genome2 = Genome.default(2, 2, 1, 1, mode="fully connected")
+#
+# for i in range(10):
+#     genome2.random_mutation()
+#
+# print(genome1)
+# print(genome2)
+# print(genome1.similarity(genome2))

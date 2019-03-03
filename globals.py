@@ -34,7 +34,7 @@ default_genome_mode = "unconnected"
 
 # variables for comparing genomes
 node_gene_similarity_coefficient = 0.5
-edge_gene_similarity_coefficient = 0.9
+edge_gene_similarity_coefficient = 0.8
 edge_weight_similarity_coefficient = 0.5
 
 # variables for mutating genomes
@@ -50,7 +50,7 @@ mutate_change_aggregation_function_probability = 0.05
 mutate_change_activation_function_probability = 0.05
 
 # variables for Species
-species_similarity_threshold = 1
+species_similarity_threshold = 0.6
 stagnation_time = 2000 # number of generations without fitness improvement before a species is considered stagnant
 elites_to_keep = 0 # doesn't work yet
 reproduction_elitism = 0.4 # percentage of individuals who will reproduce to create the next generation of the species

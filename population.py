@@ -92,7 +92,7 @@ class Population:
         self.champion = deepcopy(self.genomes[0])
 
         self.generations_run = 0
-        while (self.generations_run < num_generations if num_generations != -1 else True) and (self.max_fitness() < fitness_goal if fitness_goal is not None else True):
+        while (self.generations_run < num_generations if num_generations is None else True) and (self.champion.fitness < fitness_goal if fitness_goal is not None else True):
 
             print("Beginning generation {} with {} individuals of {} species.".format(self.generations_run + 1, self.size(), self.num_species()))
 
@@ -106,11 +106,11 @@ class Population:
 
             # report species
             #######################################################################################
-            for i in range(6 + 6 + 10 + 15):
+            for i in range(6 + 6 + 10 + 15 + 15 + 10):
                 print("-", end="", file=output_stream)
             print(file=output_stream)
-            print("%-6s%6s%10s%14s" % ("Species", "Age", "Members", "Fitness"), file=output_stream)
-            for i in range(6 + 6 + 10 + 15):
+            print("%-6s%6s%10s%14s%14s%10s" % ("Species", "Age", "Members", "Ave Fitness", "Fitness", "Std Dev"), file=output_stream)
+            for i in range(6 + 6 + 10 + 15 + 15 + 10):
                 print("-", end="", file=output_stream)
             print(file=output_stream)
             for species in self.species:
@@ -126,8 +126,13 @@ class Population:
             self.generations_run += 1
 
             if generation_champion.fitness >= self.champion.fitness:
-                self.champion = generation_champion
-                print("Best genome in generation {}: genome {}, fitness: {}".format(self.generations_run, generation_champion.identifier, generation_champion.fitness),file=output_stream, end="\n\n")
+                self.champion = deepcopy(generation_champion)
+            print("Best genome so far: {}, fitness: {}".format(self.champion.identifier, round(self.champion.fitness, 2)), end="")
+            if fitness_goal is not None:
+                print(" ({}% of {} goal)".format(round(100 * float(self.champion.fitness) / fitness_goal, 2), fitness_goal))
+            else:
+                print()
+            print("Best genome in generation {}: genome {}, fitness: {}".format(self.generations_run, generation_champion.identifier, round(generation_champion.fitness, 2)),file=output_stream, end="\n\n")
             # else:
             #     raise RuntimeError("Serious error here.")
 
@@ -208,11 +213,13 @@ class Population:
             if species.is_stagnated() or species.size() == 0:
 
                 print("Removing stagnated species {}.".format(species.identifier), file=self.output_stream)
+
+                # for genome in species.genomes:
+                #     self.genomes.remove(genome)
+
                 self.species.remove(species)
 
     def step_species_generation(self):
-
-        self.set_total_fitness()
 
         for species in self.species:
 
@@ -262,19 +269,25 @@ class Population:
             children_generated = species.reproduce(num_children, self.next_genome_identifier)
             self.next_genome_identifier = children_generated
 
-            for genome in species.elites:
-                self.genomes.append(genome)
+            for child in species.children:
+                self.mutate_genome(child)
+                self.misfits.append(child)
 
-            for genome in species.genomes:
-                self.mutate_genome(genome)
-                self.genomes.append(genome)
+                # print(child)
 
-            for genome in species.misfits:
-                # print("categorizing misfit {}".format(genome.identifier))
-                self.mutate_genome(genome)
-                self.misfits.append(genome)
+            # for genome in species.elites:
+            #     self.genomes.append(genome)
+            #
+            # for genome in species.genomes:
+            #     self.mutate_genome(genome)
+            #     self.genomes.append(genome)
+            #
+            # for genome in species.misfits:
+            #     # print("categorizing misfit {}".format(genome.identifier))
+            #     self.mutate_genome(genome)
+            #     self.misfits.append(genome)
 
-        print("total_children_requested: {}, number of genomes existing: {}".format(total_children_requested, len(self.genomes)))
+        # print("total_children_requested: {}, number of genomes existing: {}".format(total_children_requested, len(self.genomes)))
 
     def set_neural_networks(self):
 

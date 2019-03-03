@@ -1,3 +1,5 @@
+from functions import *
+
 def xor(inputs):
 
     result = None
@@ -112,7 +114,7 @@ def test_xor_sigmoid_print(neural_network):
         network_output = neural_network.activate(inputs)
         true_output = xor(inputs)
 
-        print(inputs, "->", network_output)
+        print("{}->{}->{}".format(inputs, network_output, binary_step(network_output[0] - 0.5)))
 
         if network_output == []:
             fitness -= true_output[0]

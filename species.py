@@ -1,5 +1,6 @@
 from math import *
 from random import *
+import numpy
 
 from globals import *
 from genome import *
@@ -16,7 +17,7 @@ class Species:
         self.ancestors = []
         self.genomes = []
         self.elites = []
-        self.misfits = []
+        self.children = []
 
         self.fitness_history = []
         self.fitness = None
@@ -39,7 +40,7 @@ class Species:
 
         # clear genomes
         self.genomes.clear()
-        self.misfits.clear()
+        # self.misfits.clear()
 
     def reproduce(self, num_children, next_genome_identifier):
 
@@ -56,6 +57,7 @@ class Species:
         potential_parents = self.ancestors[0 : num_parents]
 
         # create children
+        self.children.clear()
         for i in range(num_children):
 
             # randomly choose parents
@@ -69,10 +71,12 @@ class Species:
             # increment identifier
             next_genome_identifier += 1
 
-            if self.is_compatible_with(child):
-                self.genomes.append(child)
-            else:
-                self.misfits.append(child)
+            self.children.append(child)
+
+            # if self.is_compatible_with(child):
+            #     self.genomes.append(child)
+            # else:
+            #     self.misfits.append(child)
 
         return next_genome_identifier
 
@@ -135,4 +139,4 @@ class Species:
 
     def information_entry(self):
 
-        return "%6s%6s%10s%15s" % (self.identifier, len(self.fitness_history), len(self.genomes), round(self.fitness, 2))
+        return "%6s%6s%10s%15s%15s%10s" % (self.identifier, len(self.fitness_history), len(self.genomes), round(self.average_fitness(), 2), round(self.fitness, 2), round(numpy.std([genome.fitness for genome in self.genomes]), 3))
