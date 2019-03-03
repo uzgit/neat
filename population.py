@@ -94,14 +94,21 @@ class Population:
         self.generations_run = 0
         while (self.generations_run < num_generations if num_generations is None else True) and (self.champion.fitness < fitness_goal if fitness_goal is not None else True):
 
+            self.set_species()
+
             print("Beginning generation {} with {} individuals of {} species.".format(self.generations_run + 1, self.size(), self.num_species()))
 
-            # self.set_species()
-            self.remove_empty_species()
 
-            # self.neural_networks.clear()
+            self.remove_empty_species()
             self.set_neural_networks()
+
+            # split here when using an external evaluation function
+            ############################################################################################################
+
             self.evaluate_neural_networks(evaluation_function)
+
+            ############################################################################################################
+
             self.set_species_fitnesses()
 
             # report species
@@ -152,7 +159,7 @@ class Population:
         self.step_species_generation()
         self.species_reproduce()
 
-        self.set_species()
+        # self.set_species()
 
     # assume empty species but full genome list
     def set_species(self):

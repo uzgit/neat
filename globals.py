@@ -1,3 +1,5 @@
+# Adjustable parameters for configuring the evolution
+
 # general variables for node biases
 random_initial_bias = True
 initial_weight_min = -5

@@ -229,7 +229,7 @@ best_genome = population.run_with_local_fitness_function(test_xor_sigmoid, num_g
 best_neural_network = FeedForwardNeuralNetwork(best_genome)
 
 # draw_neural_network_active(best_neural_network, "images/best_active")
-# draw_neural_network_full(best_neural_network, "images/best_full")
+draw_neural_network_full(best_neural_network, "images/best_full")
 
 print(best_genome)
 print("fitness: {}".format(test_xor_sigmoid(best_neural_network)))
@@ -262,3 +262,8 @@ test_xor_sigmoid_print(best_neural_network)
 # print(genome1)
 # print(genome2)
 # print(genome1.similarity(genome2))
+
+# genome = Genome.from_file("XOR_champion.genome")
+# neural_network = FeedForwardNeuralNetwork(genome)
+# draw_neural_network_full(neural_network)
+# test_xor_sigmoid_print(neural_network)
