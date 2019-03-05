@@ -29,8 +29,8 @@ def test_xor_sigmoid(neural_network):
         network_output = neural_network.activate(inputs)
         true_output = xor(inputs)
 
-        if network_output == []:
-            fitness -= 1#true_output[0]
+        if network_output[0] == None:
+            fitness -= 1
         else:
             fitness -= (network_output[0] - true_output[0]) ** 2
             # fitness -= abs(network_output[0] - true_output[0])

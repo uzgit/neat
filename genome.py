@@ -5,18 +5,6 @@ import pickle
 from functions import *
 from globals import *
 
-mutations = {
-    "add node" : mutate_add_node_probability,
-    "remove node" : mutate_remove_node_probability,
-    "set bias" : mutate_set_bias_probability,
-    "add edge" : mutate_add_edge_probability,
-    "remove edge" : mutate_remove_edge_probability,
-    "reset weight" : mutate_reset_weight_probability,
-    "scale weight" : mutate_scale_weight_probability,
-     "change aggregation function" : mutate_change_aggregation_function_probability,
-     "change activation function" : mutate_change_activation_function_probability,
-}
-
 class NodeGene:
 
     def __init__(self, identifier, aggregation_function=default_aggregation_function, bias=None, activation_function=default_activation_function, is_input_node=False, is_output_node=False, is_enabled=True):
@@ -24,26 +12,26 @@ class NodeGene:
         self.identifier = identifier
         self.aggregation_function = aggregation_function
         self.activation_function = activation_function
-        self.is_input_node= is_input_node
+        self.is_input_node = is_input_node
         self.is_output_node = is_output_node
-
-        if self.is_input_node or self.is_output_node:
-            self.bias = 0
-        elif bias == None and random_initial_bias:
-            self.bias = uniform(initial_weight_min, initial_weight_max)
-        else:
-            self.bias = bias
-
         self.is_enabled = is_enabled
 
-        self.predecessors = []
-        self.output_nodes = []
-        self.successors = []
-        self.layer = None
+        self.bias = bias
+        if self.bias is None and random_initial_bias and not(self.is_input_node or self.is_output_node):
+            self.bias = uniform(bias_min, bias_max)
+
+    def sanity_check(self):
+
+        assert self.identifier is not None
+        assert self.aggregation_function in aggregation_functions
+        assert self.activation_function in activation_functions
+        assert not (self.is_input_node and not self.is_enabled)
+        assert not (self.is_output_node and not self.is_enabled)
+        assert not (self.is_input_node and self.is_output_node)
 
     def __str__(self):
 
-        representation = "node {}: {}, bias: {}, {}".format(self.identifier, self.aggregation_function, self.bias, self.activation_function)
+        representation = "node {}: {}, bias: {}, {}".format(self.identifier, function_names[self.aggregation_function], self.bias if self.bias is None else round(self.bias, 2), function_names[self.activation_function])
 
         if not self.is_enabled:
             representation += " (disabled) "
@@ -54,45 +42,57 @@ class NodeGene:
 
         return representation
 
-    __repr__ = __str__
-
-    def str(self):
-
-        return self.__str__()
-
     def __repr__(self):
 
         return self.__str__()
 
 class EdgeGene:
 
-    def __init__(self, identifier, innovation_number, input_node_identifier, output_node_identifier, weight, is_enabled=True):
+    def __init__(self, input_node_identifier, output_node_identifier, identifier=None, innovation_number=None, weight=None, is_enabled=True):
 
+        # These should never change after being set.
         self.identifier = identifier
         self.innovation_number = innovation_number
         self.input_node_identifier = input_node_identifier
         self.output_node_identifier = output_node_identifier
+
+        # These can change after being set.
         self.weight = weight
         self.is_enabled = is_enabled
 
+        if self.weight is None:
+            self.weight = uniform(initial_weight_min, initial_weight_max)
+
+        self.innovation = "{}->{}".format(self.input_node_identifier, self.output_node_identifier)
+        if self.innovation_number is None:
+            self.set_innovation_number()
+
         self.sanity_check()
 
-    def is_equivalent_to(self, edge_2):
+    # The global_innovations dictionary contains a list of all unique edges that have ever been created, along with
+    # their innovation numbers. This is to avoid the competing conventions problem.
+    def set_innovation_number(self):
 
-        result = False
-        if self.input_node_identifier == edge_2.input_node_identifier and self.output_node_identifier == edge_2.output_node_identifier and self.is_enabled == edge_2.is_enabled:
-            result = True
+        if self.innovation in global_innovations:
+            self.innovation_number = global_innovations[self.innovation]
 
-        return result
+        else:
+            self.innovation_number = max(global_innovations.values()) + 1
+            global_innovations.update({self.innovation : self.innovation_number})
 
     def sanity_check(self):
 
-        assert self.weight >= global_weight_min, "edge weight {} < {}".format(self.weight, global_weight_min)
-        assert self.weight <= global_weight_max, "edge weight {} > {}".format(self.weight, global_weight_max)
+        assert self.identifier is not None
+        assert self.input_node_identifier is not None
+        assert self.output_node_identifier is not None
+        assert self.input_node_identifier is not self.output_node_identifier, "{} and {}".format(self.input_node_identifier, self.output_node_identifier)
+        assert self.innovation_number is not None
+        assert self.is_enabled is not None
+        assert self.weight is not None
 
     def __str__(self):
 
-        representation = "edge {} ({}): {}->{}, {}".format(self.identifier, self.innovation_number, self.input_node_identifier, self.output_node_identifier, self.weight)
+        representation = "edge {} ({}): {}->{}, {}".format(self.identifier, self.innovation_number, self.input_node_identifier, self.output_node_identifier, round(self.weight, 2))
 
         if self.is_enabled:
             representation += " enabled"
@@ -101,86 +101,82 @@ class EdgeGene:
 
         return representation
 
-    def str(self):
-
-        return self.__str__()
-
     def __repr__(self):
 
         return self.__str__()
 
 class Genome:
 
-    def __init__(self, identifier, nodes, edges, max_num_hidden_nodes=default_max_num_hidden_nodes):
-
-        assert len(nodes) > 0
+    # Basic Genome constructor.
+    def __init__(self, num_inputs, num_outputs, nodes=None, edges=None, max_num_hidden_nodes=default_max_num_hidden_nodes, identifier=None):
 
         self.identifier = identifier
-        self.nodes = deepcopy(nodes)
-        self.nodes.sort(key=lambda node: node.identifier)
-        self.edges = deepcopy(edges)
+        if identifier is None:
+            self.set_identifier()
+        self.num_inputs = num_inputs
+        self.num_outputs = num_outputs
         self.max_num_hidden_nodes = max_num_hidden_nodes
 
-        self.num_inputs  = len([node for node in self.nodes if node.is_input_node])
-        self.num_outputs = len([node for node in self.nodes if node.is_output_node])
+        self.nodes = []
+        if nodes is not None:
+            self.nodes = deepcopy(nodes)
 
-        self.fitness = 0
-        self.possible_new_edges = []
-        # self.set_topology()
+        self.edges = []
+        if edges is not None:
+            self.edges = deepcopy(edges)
 
+        self.fitness = None
+
+    def set_identifier(self):
+
+        self.identifier = max(global_genome_identifiers) + 1
+        global_genome_identifiers.append(self.identifier)
+
+    # Easier way to create a Genome with nodes and possible edges.
     @classmethod
-    def default(cls, identifier, num_inputs, num_outputs, num_hidden_nodes=0, aggregation_function=default_aggregation_function, activation_function=default_activation_function, input_aggregation_function=default_input_aggregation_function, input_activation_function=default_input_activation_function, output_activation_function=default_output_activation_function, mode=default_genome_mode, weights="randomized", max_num_hidden_nodes=default_max_num_hidden_nodes):
+    def default(cls, num_inputs, num_outputs, num_hidden_nodes=0, aggregation_function=default_aggregation_function, activation_function=default_activation_function, input_aggregation_function=default_input_aggregation_function, input_activation_function=default_input_activation_function, output_activation_function=default_output_activation_function, mode=default_genome_mode, weights="randomized", max_num_hidden_nodes=default_max_num_hidden_nodes, identifier=None):
 
         nodes = []
         edges = []
 
-        node_identifier = 1
-        for i in range(1, num_inputs + 1):
-            nodes.append(NodeGene(node_identifier, aggregation_function=input_aggregation_function, activation_function=input_activation_function, is_input_node=True))
-            node_identifier += 1
+        genome = Genome(identifier=identifier, num_inputs=num_inputs, num_outputs=num_outputs, max_num_hidden_nodes=max_num_hidden_nodes)
 
-        for i in range(1, num_hidden_nodes + 1):
-            nodes.append(NodeGene(node_identifier, aggregation_function=aggregation_function, activation_function=activation_function))
-            node_identifier += 1
+        for i in range(num_inputs):
+            genome.add_node( NodeGene(genome.next_node_identifier(), aggregation_function=input_aggregation_function, activation_function=input_activation_function, is_input_node=True, bias=None) )
 
-        for i in range(1, num_outputs + 1):
-            nodes.append(NodeGene(node_identifier, aggregation_function=aggregation_function, activation_function=output_activation_function, is_output_node=True))
-            node_identifier += 1
+        for i in range(num_outputs):
+            genome.add_node( NodeGene(genome.next_node_identifier(), aggregation_function=aggregation_function, activation_function=output_activation_function, is_output_node=True, bias=None) )
+
+        for i in range(num_hidden_nodes):
+            genome.add_node( NodeGene(genome.next_node_identifier(), aggregation_function=aggregation_function, activation_function=activation_function) )
 
         if mode == "fully connected":
 
-            input_nodes  = [node for node in nodes if node.is_input_node]
-            hidden_nodes = [node for node in nodes if not node.is_input_node and not node.is_output_node]
-            output_nodes = [node for node in nodes if node.is_output_node]
-
-            edge_identifier = 1
-            innovation_number = 1
+            input_nodes  = [node for node in genome.nodes if node.is_input_node]
+            hidden_nodes = [node for node in genome.nodes if not node.is_input_node and not node.is_output_node]
+            output_nodes = [node for node in genome.nodes if node.is_output_node]
 
             if num_hidden_nodes != 0:
                 for input_node in input_nodes:
                     for hidden_node in hidden_nodes:
 
                         if weights == "randomized":
-                            weight = uniform(global_weight_min, global_weight_max)
+                            weight = None
                         else:
                             weight = 1
 
-                        edges.append(EdgeGene(edge_identifier, innovation_number, input_node.identifier, hidden_node.identifier, weight))
-
-                        edge_identifier   += 1
-                        innovation_number += 1
+                        # input_node_identifier, output_node_identifier, identifier=None, innovation_number=None, weight=None, is_enabled=True, genome=None):
+                        genome.add_edge( EdgeGene(input_node.identifier, hidden_node.identifier, weight=weight, identifier=genome.next_edge_identifier()) )
 
                 for hidden_node in hidden_nodes:
                     for output_node in output_nodes:
 
                         if weights == "randomized":
-                            weight = uniform(global_weight_min, global_weight_max)
+                            weight = None
                         else:
                             weight = 1
 
-                        edges.append(EdgeGene(edge_identifier, innovation_number, hidden_node.identifier, output_node.identifier, weight))
-                        edge_identifier   += 1
-                        innovation_number += 1
+                        genome.add_edge( EdgeGene(hidden_node.identifier, output_node.identifier, weight=weight, identifier=genome.next_edge_identifier()) )
             else:
                 for input_node in input_nodes:
                     for output_node in output_nodes:
@@ -190,576 +186,389 @@ class Genome:
                         else:
                             weight = 1
 
-                        edges.append(EdgeGene(edge_identifier, innovation_number, input_node.identifier, output_node.identifier, weight))
+                        genome.add_edge( EdgeGene(input_node.identifier, output_node.identifier, weight=weight, identifier=genome.next_edge_identifier()) )
 
-                        edge_identifier   += 1
-                        innovation_number += 1
-
-        return Genome(identifier, nodes, edges, max_num_hidden_nodes=max_num_hidden_nodes)
-
-    def set_topology(self):
-
-        # clear topological data
-        for node in self.nodes:
-            node.predecessors.clear()
-            node.successors.clear()
-            node.layer = None
-
-        # set immediate predecessors and successors
-        for edge in self.edges:
-
-            if edge.is_enabled:
-
-                input_node = next(node for node in self.nodes if node.identifier == edge.input_node_identifier)
-                output_node = next(node for node in self.nodes if node.identifier == edge.output_node_identifier)
-
-                output_node.predecessors.append(input_node)
-                input_node.output_nodes.append(output_node)
-                input_node.successors.append(output_node)
-
-        # set layers
-        for node in [node for node in self.nodes if node.is_input_node]:
-            node.layer = 1
-
-        outer_change_occurred = True
-        while outer_change_occurred:
-
-            outer_change_occurred = False
-
-            # forward layer determination
-            change_occurred = True
-            while change_occurred:
-                change_occurred = False
-
-                for node in self.nodes:
-
-                    predecessor_layers = [predecessor.layer for predecessor in node.predecessors if predecessor.layer is not None]
-                    if len(predecessor_layers) > 0:
-
-                        new_layer = max(predecessor_layers) + 1
-                        if node.layer != new_layer:
-                            node.layer = new_layer
-                            change_occurred = True
-                            outer_change_occurred = True
-
-            # backward layer determination
-            change_occurred = True
-            while change_occurred:
-                change_occurred = False
-
-                # only backwards propagate if the node behind has a bias of None (different from nonzero bias, as some activation functions do not pass through the origin)
-                for node in [node for node in self.nodes if node.layer is None and node.bias is not None]:
-
-                    successor_layers = [successor.layer for successor in node.successors if successor.layer is not None]
-                    if len(successor_layers) > 0:
-
-                        new_layer = min(successor_layers) - 1
-                        if node.layer != new_layer:
-
-                            node.layer = new_layer
-                            change_occurred = True
-                            outer_change_occurred = True
-
-        # set all predecessors
-        self.min_layer = min([node.layer for node in self.nodes if node.layer is not None])
-        self.max_layer = max([node.layer for node in self.nodes if node.layer is not None])
-        for current_layer in range(self.min_layer, self.max_layer + 1):
-
-            # accummulate predecessors
-            current_layer_nodes = [node for node in self.nodes if node.layer == current_layer]
-            for current_layer_node in current_layer_nodes:
-                for predecessor in current_layer_node.predecessors:
-
-                    current_layer_node.predecessors += [pre_predecessor for pre_predecessor in predecessor.predecessors if pre_predecessor not in current_layer_node.predecessors]
-
-        # set all successors
-        for current_layer in range(self.max_layer, self.min_layer - 1, -1):
-
-            #accummulate successors
-            current_layer_nodes = [node for node in self.nodes if node.layer == current_layer]
-            for current_layer_node in current_layer_nodes:
-                for successor in current_layer_node.successors:
-
-                    current_layer_node.successors += [post_successor for post_successor in successor.successors]# if post_successor not in current_layer_node.successors]
-
-        for node in self.nodes:
-            node.predecessors.sort(key=lambda predecessor : predecessor.identifier)
-            node.successors.sort(key=lambda successor : successor.identifier)
-
-    def mutate_add_node(self, new_node_identifier=None, innovation_number_1=None, innovation_number_2=None, disabled_edge_identifier=None, mode=None, new_node_aggregation_function=default_aggregation_function, new_node_activation_function=default_activation_function):
-
-        if new_node_identifier == None:
-            new_node_identifier = max([node.identifier for node in self.nodes] + [0]) + 1
-
-        active_edges = [edge for edge in self.edges if edge.is_enabled]
-
-        if len(active_edges) > 0:
-
-            if disabled_edge_identifier == None:
-                # choose a random active edge
-                disabled_edge = choice(active_edges)
-                disabled_edge.is_enabled = False
-            else:
-                disabled_edge = [edge for edge in active_edges if edge.identifier == disabled_edge_identifier][0]
-
-            if mode == "random":
-                new_node_aggregation_function = choice(aggregation_function_names)
-                new_node_activation_function = choice(activation_function_names)
-
-            # create a new node
-            new_node = NodeGene(new_node_identifier, aggregation_function=new_node_aggregation_function, activation_function=new_node_activation_function)
-
-            # create two new edges
-            new_edge_identifier = max([edge.identifier for edge in self.edges] + [0]) + 1
-            new_edge_1 = EdgeGene(new_edge_identifier, innovation_number_1, disabled_edge.input_node_identifier, new_node.identifier, 1)
-            new_edge_2 = EdgeGene(new_edge_identifier + 1, innovation_number_2, new_node.identifier, disabled_edge.output_node_identifier, disabled_edge.weight)
-
-            self.nodes.append(new_node)
-            self.edges.append(new_edge_1)
-            self.edges.append(new_edge_2)
-
-            # self.set_topology()
-
-            return new_node
-
-        return False
-
-    def mutate_remove_node(self, removed_node_identifier=None):
-
-        if removed_node_identifier == None:
-            # choose a random node to remove
-            removed_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled] + [None])
-        else:
-            removed_node = ([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled and node.identifier == removed_node_identifier] + [None])[0]
-
-        if removed_node is not None:
-            # disable the relevant node
-            removed_node.is_enabled = False
-
-            # get all the enabled edges that use the removed node as input or output and disable them
-            removed_edges = [edge for edge in self.edges if edge.is_enabled and (edge.input_node_identifier == removed_node.identifier or edge.output_node_identifier == removed_node.identifier)]
-            for edge in removed_edges:
-                edge.is_enabled = False
-
-        # self.set_topology()
-
-    def mutate_set_bias(self, node=None, bias=None):
-
-        if node == None:
-            node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node])
-
-        if bias == None:
-            new_bias = uniform(global_bias_min, global_bias_max)
-        else:
-            new_bias = bias
-
-        node.bias = new_bias
-
-    def get_num_possible_new_edges(self):
-
-        num_possible_new_edges = 0
-
-        possible_input_nodes  = [node for node in self.nodes if not node.is_output_node and node.is_enabled]
-        possible_output_nodes = [node for node in self.nodes if not node.is_input_node and node.is_enabled]
-
-        self.possible_new_edges.clear()
-        for possible_input_node in possible_input_nodes:
-            for possible_output_node in possible_output_nodes:
-
-                if (possible_input_node is not possible_output_node) and (possible_output_node not in possible_input_node.predecessors) and (possible_output_node not in possible_input_node.output_nodes):
-
-                    num_possible_new_edges += 1
-
-        return num_possible_new_edges
-
-    def mutate_add_edge(self, new_edge_identifier=None, input_node_identifier=None, output_node_identifier=None, weight=None, weight_min=global_weight_min, weight_max=global_weight_max):
-
-        new_edge = None
-
-        self.set_topology()
-
-        if new_edge_identifier == None:
-            new_edge_identifier = max([edge.identifier for edge in self.edges] + [0]) + 1
-
-        # if the edge has been specified
-        if input_node_identifier is not None or output_node_identifier is not None:
-            assert input_node_identifier is not None and output_node_identifier is not None # just because
-
-            if weight == None:
-                weight = uniform(weight_min, weight_max)
-
-            new_edge = EdgeGene(new_edge_identifier, None, input_node_identifier, output_node_identifier, weight)
-
-        # if a random edge needs to be generated
-        else:
-            possible_input_nodes  = [node for node in self.nodes if not node.is_output_node and node.is_enabled]
-            possible_output_nodes = [node for node in self.nodes if not node.is_input_node and node.is_enabled]
-
-            shuffle(possible_input_nodes)
-            shuffle(possible_output_nodes)
-
-            found_edge = False
-            i = 0
-            while not found_edge and i < len(possible_input_nodes):
-
-                possible_input_node = possible_input_nodes[i]
-
-                ii = 0
-                while not found_edge and ii < len(possible_output_nodes):
-
-                    possible_output_node = possible_output_nodes[ii]
-                    if (possible_input_node is not possible_output_node) and (
-                            possible_output_node not in possible_input_node.predecessors) and (
-                            possible_output_node not in possible_input_node.output_nodes):
-
-                        if weight == None:
-                            weight = uniform(weight_min, weight_max)
-
-                        new_edge = EdgeGene(new_edge_identifier, None, possible_input_node.identifier, possible_output_node.identifier, weight)
-                        found_edge = True
-
-                    ii += 1
-
-                i += 1
-
-        if new_edge is not None:
-
-            self.edges.append(new_edge)
-            self.set_topology()
-
-        return new_edge
-
-    def mutate_add_edge_deprecated(self, new_edge_identifier=None, input_node_identifier=None, output_node_identifier=None, weight=None, weight_min=global_weight_min, weight_max=global_weight_max):
-
-        new_edge = None
-
-        self.set_topology()
-
-        if new_edge_identifier == None:
-            new_edge_identifier = max([edge.identifier for edge in self.edges] + [0]) + 1
-
-        # if the edge has been specified
-        if input_node_identifier is not None or output_node_identifier is not None:
-            assert input_node_identifier is not None and output_node_identifier is not None # just because
-
-            if weight == None:
-                weight = uniform(weight_min, weight_max)
-
-            new_edge = EdgeGene(new_edge_identifier, None, input_node_identifier, output_node_identifier, weight)
-
-        # if a random edge needs to be generated
-        else:
-            possible_input_nodes  = [node for node in self.nodes if not node.is_output_node and node.is_enabled]
-            possible_output_nodes = [node for node in self.nodes if not node.is_input_node and node.is_enabled]
-
-            self.possible_new_edges.clear()
-            for possible_input_node in possible_input_nodes:
-                for possible_output_node in possible_output_nodes:
-
-                    if (possible_input_node is not possible_output_node) and (possible_output_node not in possible_input_node.predecessors) and (possible_output_node not in possible_input_node.output_nodes):
-
-                        # print("possible input node {} successors : {}, new node: {}".format(possible_input_node.identifier, [node.identifier for node in possible_input_node.successors], possible_output_node.identifier))
-                        # if (possible_output_node in possible_input_node.successors):
-                        #     raise RuntimeError
-
-                        if weight == None:
-                            weight = uniform(weight_min, weight_max)
-                        self.possible_new_edges.append(EdgeGene(new_edge_identifier, None, possible_input_node.identifier, possible_output_node.identifier, weight))
-
-        if len(self.possible_new_edges) > 0:
-
-            new_edge = deepcopy(choice(self.possible_new_edges))
-
-            self.edges.append(new_edge)
-            self.set_topology()
-
-        #     print("attempted to add edge when no possible edges were available")
-        #
-        # print("added edge {}\n".format(new_edge))
-
-        return new_edge
-
-    def mutate_remove_edge(self, removed_edge_identifier=None):
-
-        if removed_edge_identifier is not None:
-            removed_edge = ([edge for edge in self.edges if edge.identifier == removed_edge_identifier] + [None])[0]
-        else:
-            removed_edge = choice(self.edges + [None])
-
-        if removed_edge is not None:
-            removed_edge.is_enabled = False
-
-        # self.set_topology()
-
-        return removed_edge
-
-    def mutate_reset_weight(self, reset_edge_identifier=None, weight_minimum=initial_weight_min, weight_maximum=initial_weight_max):
-
-        if reset_edge_identifier == None:
-            reset_edge = choice([edge for edge in self.edges] + [None])
-        else:
-            reset_edge = ([edge for edge in self.edges if edge.identifier == reset_edge_identifier] + [None])[0]
-
-        if reset_edge is not None:
-            new_weight = uniform(weight_minimum, weight_maximum)
-            reset_edge.weight = new_weight
-
-    def mutate_scale_weight(self, mutated_edge_identifier=None, scale_min=weight_scale_min, scale_max=weight_scale_max, weight_minimum=global_weight_min, weight_maximum=global_weight_max):
-
-        if mutated_edge_identifier == None:
-            mutated_edge = choice([edge for edge in self.edges] + [None])
-        else:
-            mutated_edge = ([edge for edge in self.edges if edge.identifier == mutated_edge_identifier] + [None])[0]
-
-        if mutated_edge is not None:
-            new_weight = mutated_edge.weight * uniform(scale_min, scale_max)
-            new_weight = max(weight_minimum, new_weight)
-            new_weight = min(weight_maximum, new_weight)
-
-            mutated_edge.weight = new_weight
-
-    def mutate_change_aggregation_function(self, mutated_node_identifier=None):
-
-        if mutated_node_identifier == None:
-            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled] + [None])
-        else:
-            mutated_node = choice(([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled and node.identifier == mutated_node_identifier] + [None])[0])
-
-        if mutated_node is not None:
-            new_aggregation_function = choice(aggregation_function_names)
-            mutated_node.aggregation_function = new_aggregation_function
-
-    def mutate_change_activation_function(self, mutated_node_identifier=None):
-
-        if mutated_node_identifier == None:
-            mutated_node = choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled] + [None])
-        else:
-            mutated_node = choice(([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled and node.identifier == mutated_node_identifier] + [None])[0])
-
-        if mutated_node is not None:
-            new_activation_function = choice(activation_function_names)
-            mutated_node.activation_function = new_activation_function
-
-    def random_mutation(self):
-
-        possible_mutations = mutations.copy()
-
-        if "add node" in possible_mutations and self.num_hidden_nodes() >= self.max_num_hidden_nodes:
-            possible_mutations.pop("add node")
-
-        if "remove node" in possible_mutations and self.num_hidden_nodes() == 0:
-            possible_mutations.pop("remove node")
-
-        if "set bias" in possible_mutations and self.num_hidden_nodes() == 0:
-            possible_mutations.pop("set bias")
-
-        if "change aggregation function" in possible_mutations and self.num_hidden_nodes() == 0:
-            possible_mutations.pop("change aggregation function")
-
-        if "change activation function" in possible_mutations and self.num_hidden_nodes() == 0:
-            possible_mutations.pop("change activation function")
-
-
-        if "add edge" in possible_mutations and self.get_num_possible_new_edges() == 0:
-            possible_mutations.pop("add edge")
-
-        if "remove edge" in possible_mutations and self.num_edges() == 0:
-            possible_mutations.pop("remove edge")
-
-        if "reset weight" in possible_mutations and self.num_edges() == 0:
-            possible_mutations.pop("reset weight")
-
-        if "scale weight" in possible_mutations and self.num_edges() == 0:
-            possible_mutations.pop("scale weight")
-
-        if len(possible_mutations) == 0:
-            return None
-
-        # get max probability in mutation probabilities, so that we can ensure that at least one mutation will occur
-        max_probability = max(list(possible_mutations.values()))
-
-        # choose a mutation
-        random_number = uniform(0, max_probability - 0.01)
-        new_possible_mutations = [mutation for mutation, probability in possible_mutations.items() if random_number < probability]
-        mutation = choice(new_possible_mutations)
-
-        # print("mutating genome {}: {}".format(self.identifier, mutation))
-
-        if mutation == "add node" and self.num_hidden_nodes() < self.max_num_hidden_nodes:
-            mutation = self.mutate_add_node()
-            # have to set innovation numbers after this
-            # this is done on the population level
-
-        elif mutation == "remove node" and self.num_hidden_nodes() > 0:
-            self.mutate_remove_node()
-
-        elif mutation == "set bias" and self.num_hidden_nodes() > 0:
-            self.mutate_set_bias()
-
-        elif mutation == "add edge" and self.get_num_possible_new_edges() > 0:
-            mutation = self.mutate_add_edge()
-            # have to set innovation numbers after this
-            # this is done on the population level
-
-        elif mutation == "remove edge" and self.num_edges() > 0:
-            self.mutate_remove_edge()
-
-        elif mutation == "reset weight" and self.num_edges() > 0:
-            self.mutate_reset_weight()
-
-        elif mutation == "scale weight" and self.num_edges() > 0:
-            self.mutate_scale_weight()
-
-        elif mutation == "change aggregation function" and self.num_hidden_nodes() > 0:
-            self.mutate_change_aggregation_function()
-
-        elif mutation == "change activation function" and self.num_hidden_nodes() > 0:
-            self.mutate_change_activation_function()
-
-        else:
-            raise ValueError("Incorrect mutation requested: " + str(mutation))
-            mutation = None
-
-        return mutation
+        return genome
 
     @classmethod
-    def crossover(cls, genome1, genome2, new_genome_identifier):
+    def crossover(cls, genome1, genome2):
 
-        better_genome = None
-        worse_genome = None
+        assert genome1.fitness is not None
+        assert genome2.fitness is not None
+        # assert Genome.similarity(genome1, genome2) >= species_similarity_threshold
 
-        # if self Genome performs better than other_genome
-        if genome1.fitness > genome2.fitness:
-            better_genome = genome1
-            worse_genome = genome2
-        else:
-            better_genome = genome2
-            worse_genome = genome1
+        better_parent = genome1 if genome1.fitness >= genome2.fitness else genome2
+        worse_parent  = genome2 if genome2.fitness <  genome1.fitness else genome1
 
-        # crossover edges
-        better_genome_edges = sorted(better_genome.edges, key=lambda edge : edge.innovation_number)
-        worse_genome_edges = sorted(worse_genome.edges, key=lambda edge : edge.innovation_number)
-        worse_genome_edge_innovation_numbers = [edge.innovation_number for edge in worse_genome_edges]
+        worse_parent_edges = {edge.innovation : edge for edge in worse_parent.edges}
+        edges = []
+        for edge in better_parent.edges:
+            if edge.innovation in worse_parent_edges:
 
+                possible_edges = [edge, worse_parent_edges[edge.innovation]]
+                edges.append( choice( possible_edges ) )
 
-        new_genome_edges = []
-        for better_genome_edge in better_genome_edges:
-            if better_genome_edge.innovation_number in worse_genome_edge_innovation_numbers:
-
-                worse_genome_edge = [edge for edge in worse_genome_edges if better_genome_edge.innovation_number == edge.innovation_number][0]
-
-                new_edge = deepcopy(choice([better_genome_edge, worse_genome_edge]))
-                new_genome_edges.append(new_edge)
-
-        new_genome_node_identifiers = []
-        new_genome_node_identifiers += [edge.input_node_identifier for edge in new_genome_edges if edge.input_node_identifier not in new_genome_node_identifiers]
-        new_genome_node_identifiers += [edge.output_node_identifier for edge in new_genome_edges if edge.output_node_identifier not in new_genome_node_identifiers]
-
-        hidden_nodes = deepcopy(better_genome.nodes) + deepcopy(worse_genome.nodes)
-        better_genome_node_identifiers = [node.identifier for node in better_genome.nodes]
-        worse_genome_node_identifiers = [node.identifier for node in worse_genome.nodes]
-
-        new_genome_nodes = [node for node in better_genome.nodes if node.is_input_node or node.is_output_node]
-        for new_node_identifier in new_genome_node_identifiers:
-
-            # next((x for x in test_list if x.value == value), None)
-            instance_from_better_genome = next((node for node in better_genome.nodes if node.identifier == new_node_identifier), None)
-            instance_from_worse_genome = next((node for node in worse_genome.nodes if node.identifier == new_node_identifier), None)
-
-            if instance_from_worse_genome is None:
-                new_node = instance_from_better_genome
-            elif instance_from_better_genome is None:
-                new_node = instance_from_worse_genome
-            elif instance_from_better_genome.is_enabled == False:
-                new_node = instance_from_better_genome
-            elif instance_from_worse_genome.is_enabled == False:
-                new_node = instance_from_worse_genome
             else:
-                new_node = instance_from_better_genome
+                edges.append(edge)
+        edges.sort(key=lambda edge : edge.innovation_number)
 
-            if new_node not in new_genome_nodes:
-                new_genome_nodes.append(new_node)
+        # We have to ensure that all nodes with enabled edges are also enabled
+        used_node_identifiers = {edge.input_node_identifier for edge in edges if edge.is_enabled}
+        used_node_identifiers = used_node_identifiers.union(edge.output_node_identifier for edge in edges if edge.is_enabled)
 
-        new_genome = Genome(new_genome_identifier, new_genome_nodes, new_genome_edges, max_num_hidden_nodes=genome1.max_num_hidden_nodes)
+        nodes = []
+        better_parent_nodes = {node.identifier : node for node in better_parent.nodes}
+        worse_parent_nodes = {node.identifier : node for node in worse_parent.nodes}
+        for node in better_parent.nodes:
+            if node.identifier in worse_parent_nodes:
 
-        assert len([node for node in new_genome.nodes if node.is_input_node]) == len([node for node in genome1.nodes if node.is_input_node])
-        assert len([node for node in new_genome.nodes if node.is_output_node]) == len([node for node in genome1.nodes if node.is_output_node])
+                possible_nodes = [node, worse_parent_nodes[node.identifier]]
 
-        # for edge1 in new_genome.edges:
-        #     for edge2 in new_genome.edges:
+                # The node must be enabled.
+                if node.identifier in used_node_identifiers:
+                    truly_possible_nodes = [node for node in possible_nodes if node.is_enabled]
+                    nodes.append( choice(truly_possible_nodes) )
+                else:
+                    nodes.append( choice(possible_nodes) )
+
+            else:
+                nodes.append(node)
+
+        # node_identifiers = [node.identifier for node in nodes]
+        # for node_identifier in used_node_identifiers:
+        #     if node_identifier not in node_identifiers:
         #
-        #         if edge1 is not edge2:
-        #
-        #             assert not ((edge1.input_node_identifier == edge2.input_node_identifier) and (edge1.output_node_identifier == edge2.output_node_identifier)), "{} and {}".format(edge1, edge2)
-        #             new_genome.edges.remove(edge2)
+        #         if node_identifier in better_parent_nodes:
+        #             nodes.append(better_parent_nodes[node_identifier])
+        #             print("added node {} from better parent")
+        #         elif node.identifier in worse_parent_nodes:
+        #             nodes.append(worse_parent_nodes[node_identifier])
+        #         else:
+        #             raise RuntimeError
 
-        return new_genome
+        assert used_node_identifiers.issubset(set([node.identifier for node in nodes]))
 
-    def num_hidden_nodes(self):
+        child = Genome(num_inputs=genome1.num_inputs, num_outputs=genome1.num_outputs, nodes=nodes)
+        for edge in edges:
+            child.add_edge(edge)
 
-        return len([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled])
-
-    def num_edges(self):
-
-        return len(self.edges)
-
-    def num_active_edges(self):
-
-        return len([edge for edge in self.edges if edge.is_enabled])
-
-    def save(self, filename):
-
-        file = open(filename, "wb")
-        pickle.dump(self, file, protocol=-1)
+        return child
 
     @classmethod
-    def from_file(cls, filename):
-        file = open(filename, "rb")
-        return pickle.load(file)
-
-    def copy(self):
-        return deepcopy(self)
-
-    def similarity(self, genome):
+    def similarity(cls, genome1, genome2):
 
         numerator   = 0
         denominator = 0
 
-        node_identifiers = [node.identifier for node in self.nodes]
-        other_node_identifiers = [node.identifier for node in genome.nodes]
+        genome1_node_identifiers = [(node.identifier, node.is_enabled) for node in genome1.nodes]
+        genome2_node_identifiers = [(node.identifier, node.is_enabled) for node in genome2.nodes]
 
-        edge_innovation_numbers = [edge.innovation_number for edge in self.edges]
-        other_edge_innovation_numbers = [edge.innovation_number for edge in genome.edges]
+        numerator += node_gene_similarity_measure * len( set(genome1_node_identifiers).intersection(set(genome2_node_identifiers)) )
+        denominator += node_gene_similarity_measure * max(len(genome1.nodes), len(genome2.nodes))
 
-        for node_identifier in node_identifiers:
-            if node_identifier in other_node_identifiers:
-                numerator += node_gene_similarity_coefficient
+        genome1_edge_identifiers = [(edge.innovation, edge.is_enabled) for edge in genome1.edges]
+        genome2_edge_identifiers = [(edge.innovation, edge.is_enabled) for edge in genome2.edges]
 
-        denominator += node_gene_similarity_coefficient * max(len(self.nodes), len(genome.nodes))
+        numerator += edge_gene_similarity_measure * len( set(genome1_edge_identifiers).intersection(set(genome2_edge_identifiers)) )
+        denominator += edge_gene_similarity_measure * max(len(genome1.edges), len(genome2.edges))
 
-        for edge_innovation_number in edge_innovation_numbers:
-            if edge_innovation_number in other_edge_innovation_numbers:
-                numerator += edge_gene_similarity_coefficient
+        if denominator == 0:
+            denominator = 1
 
-        denominator += edge_gene_similarity_coefficient * max(len(self.edges), len(genome.edges))
+        return numerator / denominator
 
-        similarity = numerator / denominator
+    def random_mutation(self):
 
-        # print(similarity)
+        theoretically_possible_mutations = Genome.mutations.copy()
 
-        return similarity
+        # determine which structural mutations are possible
+        # (nonstructural mutations are always possible
 
-    def contains_edge(self, input_node_identifier, output_node_identifier):
+        # We cannot add a node to the Genome if we have already reached the maximum number of hidden nodes, or if there
+        # are no edges to split.
+        if self.num_edges() == 0 or (self.max_num_hidden_nodes is not None and self.num_hidden_nodes() >= self.max_num_hidden_nodes):
+            theoretically_possible_mutations.pop(Genome.mutate_add_node)
+            # print("removing add node")
+
+        # We cannot modify nodes if we have 0 hidden nodes.
+        if self.num_hidden_nodes() == 0:
+            # print("removing remove node")
+            theoretically_possible_mutations.pop(Genome.mutate_remove_node)
+            theoretically_possible_mutations.pop(Genome.mutate_change_aggregation_function)
+            theoretically_possible_mutations.pop(Genome.mutate_change_activation_function)
+
+            # theoretically_possible_mutations.pop(Genome.mutate_perturb_bias)
+
+        # We cannot add an edge if the graph is fully connected, or if the addition of any new edge would result
+        # in a cycle, since we are using only feed-forward networks.
+        if self.get_possible_edge() == None:
+            theoretically_possible_mutations.pop(Genome.mutate_add_edge)
+
+        # We cannot modify an edge if the Genome contains no edges.
+        if self.num_edges() == 0:
+            theoretically_possible_mutations.pop(Genome.mutate_remove_edge)
+            theoretically_possible_mutations.pop(Genome.mutate_perturb_weight)
+
+        # Ensure that the random number is greater than the probability of at least one of the mutations.
+        # This way we know that at least one mutation is guaranteed to happen.
+        random_number_max = max(theoretically_possible_mutations.values()) - 0.00001
+        random_number = uniform(0, random_number_max)
+
+        # Filter possible mutations by probability according to the randomly generated number.
+        possible_mutations = [mutation for mutation in theoretically_possible_mutations if theoretically_possible_mutations[mutation] > random_number]
+
+        # Choose a random element from the possible mutations and carry it out.
+        mutation = choice(possible_mutations)
+        mutation(self)
+
+    # Adds a random enabled node to the Genome.
+    def mutate_add_node(self):
+
+        new_node = self.get_possible_node()
+        edge = self.get_random_existing_edge()
+
+        assert new_node is not None
+        assert edge.is_enabled
+
+        self.remove_edge(edge)
+        input_edge  = EdgeGene(identifier=self.next_edge_identifier(),
+                               input_node_identifier = edge.input_node_identifier,
+                               output_node_identifier = new_node.identifier,
+                               weight = 1)
+        output_edge = EdgeGene(identifier=self.next_edge_identifier(),
+                               input_node_identifier = new_node.identifier,
+                               output_node_identifier = edge.output_node_identifier,
+                               weight = edge.weight)
+        self.add_node(new_node)
+        self.add_edge(input_edge)
+        self.add_edge(output_edge)
+
+
+    # Selects a random enabled node and disables it.
+    def mutate_remove_node(self):
+
+        removed_node = self.get_random_existing_hidden_node()
+        self.remove_node(removed_node)
+
+    # Selects a random enabled node and changes its bias to a random number constrained by global_bias_min and global_bias_max.
+    def mutate_perturb_bias(self):
+
+        perturbed_node = self.get_random_existing_hidden_or_output_node()
+        self.perturb_bias(perturbed_node)
+
+    # Selects a random enabled node and changes its aggregation function to a random different function in the list of
+    # aggregation functions.
+    def mutate_change_aggregation_function(self):
+
+        changed_node = self.get_random_existing_hidden_node()
+        possible_aggregation_functions = aggregation_functions.copy()
+        possible_aggregation_functions.remove(changed_node.aggregation_function)
+        changed_node.aggregation_function = choice(possible_aggregation_functions)
+
+    # Selects a random enabled node and changes its activation function to a random different function in the list of
+    # activation functions.
+    def mutate_change_activation_function(self):
+
+        changed_node = self.get_random_existing_hidden_node()
+        possible_activation_functions = activation_functions.copy()
+        possible_activation_functions.remove(changed_node.activation_function)
+        changed_node.activation_function = choice(possible_activation_functions)
+
+    # Creates and adds a random edge.
+    def mutate_add_edge(self):
+
+        new_edge = self.get_possible_edge()
+        self.add_edge(new_edge)
+
+    # Selects and disables a random enabled edge.
+    def mutate_remove_edge(self):
+
+        removed_edge = self.get_random_existing_edge()
+        self.remove_edge(removed_edge)
+
+    # Selects an edge and changes its weight to a random number constrained by global_weight_min and global_weight_max.
+    def mutate_perturb_weight(self):
+
+        perturbed_edge = self.get_random_existing_edge()
+        self.perturb_weight(perturbed_edge)
+
+    # Adds a given node to the Genome.
+    def add_node(self, node):
+
+        assert node is not None
+        assert node.identifier not in [node.identifier for node in self.nodes]
+        self.nodes.append(node)
+
+    # generates the next possible node, if the genome has not already reached max_nodes number of nodes.
+    # does not add the node to the genome. this is an intermediate function that should not be called from the outside.
+    def get_possible_node(self):
+
+        new_node = None
+
+        if self.max_num_hidden_nodes is None or self.num_hidden_nodes() < self.max_num_hidden_nodes:
+            new_node = NodeGene(self.next_node_identifier())
+        return new_node
+
+    # Adds a given edge to the Genome.
+    def add_edge(self, edge):
+
+        edge = deepcopy(edge)
+
+        edge.identifier = self.next_edge_identifier()
+
+        # Sanity check
+        assert edge.innovation not in [edge.innovation for edge in self.edges if edge.is_enabled]
+        if edge.is_enabled:
+            for node in self.nodes:
+                if node.identifier == edge.input_node_identifier or node.identifier == edge.output_node_identifier:
+                    assert node.is_enabled
+
+        existing_edge = ([existing_edge for existing_edge in self.edges if existing_edge.innovation == edge.innovation] + [None])[0]
+        if existing_edge is None:
+            self.edges.append(edge)
+        else:
+            existing_edge.is_enabled = True
+            existing_edge.weight = edge.weight
+
+    # generates a random possible edge, if there is any pair of nodes in the genome for which an edge can be created.
+    # this function avoids creating duplicate edges and cycles. does not add the edge to the genome.
+    # this is an intermediate function that should not be called from the outside.
+    def get_possible_edge(self):
+
+        new_edge = None
+
+        possible_input_nodes = [node for node in self.nodes if not node.is_output_node and node.is_enabled]
+        possible_output_nodes = [node for node in self.nodes if not node.is_input_node and node.is_enabled]
+
+        shuffle(possible_input_nodes)
+        shuffle(possible_output_nodes)
+
+        found_edge = False
+        possible_input_node_index = 0
+        while possible_input_node_index < len(possible_input_nodes) and not found_edge:
+            predecessors = self.get_predecessors(possible_input_nodes[possible_input_node_index])
+
+            possible_output_node_index = 0
+            while possible_output_node_index < len(possible_output_nodes) and not found_edge:
+
+                input_node_identifier = possible_input_nodes[possible_input_node_index].identifier
+                output_node_identifier = possible_output_nodes[possible_output_node_index].identifier
+                innovation = "{}->{}".format(input_node_identifier, output_node_identifier)
+
+                if innovation not in [edge.innovation for edge in self.edges if edge.is_enabled] and possible_output_nodes[possible_output_node_index].identifier not in predecessors:
+
+                    new_edge = EdgeGene(input_node_identifier, output_node_identifier, identifier=self.next_edge_identifier())
+                    found_edge = True
+
+                possible_output_node_index += 1
+
+            possible_input_node_index += 1
+
+        return new_edge
+
+    # Returns a random, enabled, hidden node.
+    def get_random_existing_hidden_node(self):
+
+        assert self.num_hidden_nodes() > 0
+        return choice([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled])
+
+    def get_random_existing_hidden_or_output_node(self):
+
+        return choice([node for node in self.nodes if (node.is_output_node or not node.is_input_node)])
+
+    # Nothing is ever removed from the genome. Instead, the node and connected edges are disabled.
+    def remove_node(self, node):
+
+        assert not (node.is_input_node or node.is_output_node)
+
+        node.is_enabled = False
+        for edge in self.edges:
+            if edge.input_node_identifier == node.identifier or edge.output_node_identifier == node.identifier:
+                self.remove_edge(edge)
+
+    # Returns a random enabled edge.
+    def get_random_existing_edge(self):
+
+        random_edge = None
+        if self.num_edges() > 0:
+            random_edge = choice([edge for edge in self.edges if edge.is_enabled])
+        return random_edge
+
+    # Disables the given edge. No component is removed from a Genome. "Removed" components are simply disabled.
+    def remove_edge(self, edge):
+
+        edge.is_enabled = False
+
+    def perturb_weight(self, edge):
+
+        edge.weight = uniform(global_weight_min, global_weight_max)
+
+    def perturb_bias(self, node):
+
+        node.bias = uniform(global_bias_min, global_bias_max)
+
+    # Returns the number of enabled edges in the Genome.
+    def num_edges(self):
+
+        return len([edge for edge in self.edges if edge.is_enabled])
+
+    # This function returns a list of the identifiers of nodes whose output propagates to the parameter node. This is
+    # used to avoid creating cycles when adding a new edge. It is implemented this way to add as little to the genome
+    # structure as possible.
+    def get_predecessors(self, node):
+
+        predecessors = [node.identifier]
+        node_stack = [node]
+        edge_stack = []
+
+        while len(node_stack) > 0:
+
+            # Add all input edges from each node to the node stack.
+            for current_node in node_stack:
+
+                # print([edge for edge in self.edges if edge.output_node_identifier == current_node.identifier and edge.input_node_identifier not in predecessors])
+                edge_stack += [edge for edge in self.edges if edge.output_node_identifier == current_node.identifier and edge.input_node_identifier not in predecessors]
+
+                # Accumulate the predecessors.
+                if current_node.identifier not in predecessors:
+                    predecessors.append(current_node.identifier)
+
+            # Add all input nodes from each edge in the edge stack to the node stack.
+            node_stack.clear()
+            for edge in edge_stack:
+                node_stack.append(self.get_node(edge.input_node_identifier))
+
+            # Reset the edge stack to an empty list.
+            edge_stack.clear()
+
+        return predecessors
+
+    # This function gets the NodeGene object that is identified by the identifier parameter.
+    def get_node(self, identifier):
 
         result = None
-
-        matching_edge = ([edge for edge in self.edges if edge.input_node_identifier == input_node_identifier and edge.output_node_identifier == output_node_identifier] + [None])[0]
-        if matching_edge == None:
-            result = True
-        else:
-            result = False
-
+        if identifier in [node.identifier for node in self.nodes]:
+            result = [node for node in self.nodes if node.identifier == identifier][0]
         return result
+
+    # Returns the number of enabled hidden nodes in the Genome.
+    def num_hidden_nodes(self):
+
+        return len([node for node in self.nodes if not node.is_input_node and not node.is_output_node and node.is_enabled])
+
+    def num_all_nodes(self):
+
+        return len([node for node in self.nodes if node.is_enabled])
+
+    # Get the identifier of any node added to the Genome at this point.
+    def next_node_identifier(self):
+
+        return max([node.identifier for node in self.nodes] + [0]) + 1
+
+    # Get the identifier of any edge added to the Genome at this point.
+    def next_edge_identifier(self):
+
+        return max([edge.identifier for edge in self.edges] + [0]) + 1
 
     def __str__(self):
 
@@ -768,19 +577,39 @@ class Genome:
         representation += "\tNodes: {} input, {} active hidden, {} output\n".format(self.num_inputs, self.num_hidden_nodes(), self.num_outputs)
 
         for node in self.nodes:
-            representation += "\t" + node.str() + "\n"
+            representation += "\t\t" + str(node) + "\n"
 
+        representation += "\tEdges: {} enabled, {} disabled\n".format(len([edge for edge in self.edges if edge.is_enabled]), len([edge for edge in self.edges if not edge.is_enabled]))
         for edge in self.edges:
-            representation += "\t" + edge.str() + "\n"
+            representation += "\t\t" + str(edge) + "\n"
 
         representation += "\n"
 
         return representation
 
-    def str(self):
-
-        return self.__str__()
-
     def __repr__(self):
 
         return self.__str__()
+
+# A dictionary of all Genome mutations, paired with their respective probabilities.
+Genome.mutations = {
+    Genome.mutate_add_node                      : mutate_add_node_probability,
+    Genome.mutate_remove_node                   : mutate_remove_node_probability,
+    Genome.mutate_perturb_bias                  : mutate_perturb_bias_probability,
+    Genome.mutate_add_edge                      : mutate_add_edge_probability,
+    Genome.mutate_remove_edge                   : mutate_remove_edge_probability,
+    Genome.mutate_perturb_weight                : mutate_perturb_weight_probability,
+    Genome.mutate_change_aggregation_function   : mutate_change_aggregation_function_probability,
+    Genome.mutate_change_activation_function    : mutate_change_activation_function_probability,
+}
+
+Genome.mutation_names = {
+    Genome.mutate_add_node                      : "add node",
+    Genome.mutate_remove_node                   : "remove node",
+    Genome.mutate_perturb_bias                  : "perturb bias",
+    Genome.mutate_add_edge                      : "add edge",
+    Genome.mutate_remove_edge                   : "remove edge",
+    Genome.mutate_perturb_weight                : "perturb weight",
+    Genome.mutate_change_aggregation_function   : "change aggregation function",
+    Genome.mutate_change_activation_function    : "change activation function",
+}

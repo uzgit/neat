@@ -1,42 +1,46 @@
 digraph {
-	1 -> 2 [color=grey fontsize=9 label=-2.00 style=solid]
-	4 -> 2 [color=grey fontsize=9 label=-0.92 style=solid]
-	8 -> 2 [color=black fontsize=9 label=1.00 style=dashed]
-	1 -> 5 [color=black fontsize=9 label=2.00 style=dashed]
-	5 -> 2 [color=black fontsize=9 label=2.00 style=dashed]
-	4 -> 7 [color=black fontsize=9 label=2.00 style=dashed]
-	8 -> 5 [color=black fontsize=9 label=2.00 style=dashed]
-	4 -> 5 [color=black fontsize=9 label=2.00 style=dashed]
-	8 -> 9 [color=black fontsize=9 label=1.00 style=solid]
-	9 -> 5 [color=black fontsize=9 label=2.00 style=dashed]
-	4 -> 23 [color=black fontsize=9 label=1.00 style=solid]
-	23 -> 7 [color=black fontsize=9 label=2.00 style=solid]
-	8 -> 26 [color=black fontsize=9 label=1.00 style=dashed]
-	26 -> 2 [color=black fontsize=9 label=1.00 style=dashed]
+	1 -> 4 [color=grey fontsize=9 label=-1.48 style=solid]
+	1 -> 5 [color=black fontsize=9 label=0.07 style=dashed]
+	1 -> 6 [color=grey fontsize=9 label=-0.50 style=dashed]
+	2 -> 4 [color=black fontsize=9 label=0.85 style=solid]
+	2 -> 5 [color=black fontsize=9 label=1.25 style=dashed]
+	2 -> 6 [color=grey fontsize=9 label=-0.44 style=dashed]
+	4 -> 3 [color=black fontsize=9 label=0.73 style=solid]
+	5 -> 3 [color=grey fontsize=9 label=-0.24 style=dashed]
+	6 -> 3 [color=black fontsize=9 label=1.65 style=dashed]
+	1 -> 4 [arrowhead=none style=invisible]
+	1 -> 5 [arrowhead=none style=invisible]
+	1 -> 6 [arrowhead=none style=invisible]
+	2 -> 4 [arrowhead=none style=invisible]
+	2 -> 5 [arrowhead=none style=invisible]
+	2 -> 6 [arrowhead=none style=invisible]
+	4 -> 3 [arrowhead=none style=invisible]
+	5 -> 3 [arrowhead=none style=invisible]
+	6 -> 3 [arrowhead=none style=invisible]
 	subgraph "input nodes" {
 		graph [rank=min]
-		1 [label="sum
+		1 [label="1
+sum, 5.4
 id" xlabel=1 color=red fontsize=9 height=0.2 shape=circle width=0.2]
-		4 [label="sum
-id" xlabel=4 color=red fontsize=9 height=0.2 shape=circle width=0.2]
-		8 [label="sum
-id" xlabel=8 color=red fontsize=9 height=0.2 shape=circle width=0.2]
+		2 [label="1
+sum, -1.4
+id" xlabel=2 color=red fontsize=9 height=0.2 shape=circle width=0.2]
 	}
 	subgraph "hidden nodes" {
-		9 [label="sum
-sig" xlabel=9 fontsize=9 height=0.2 shape=circle width=0.2]
-		23 [label="sum
-sig" xlabel=23 fontsize=9 height=0.2 shape=circle width=0.2]
-		5 [label="sum
-id" xlabel=5 fontsize=9 height=0.2 shape=circle style=dashed width=0.2]
-		26 [label="sum
-sig" xlabel=26 fontsize=9 height=0.2 shape=circle style=dashed width=0.2]
+		4 [label="2
+sum, -8.6
+sig" xlabel=4 fontsize=9 height=0.2 shape=circle width=0.2]
+		5 [label="None
+sum, -3.8
+sig" xlabel=5 fontsize=9 height=0.2 shape=circle style=dashed width=0.2]
+		6 [label="None
+sum, -1.8
+sig" xlabel=6 fontsize=9 height=0.2 shape=circle style=dashed width=0.2]
 	}
 	subgraph "output nodes" {
 		graph [rank=max]
-		2 [label="sum
-sig" xlabel=2 color=red fontsize=9 height=0.2 shape=circle width=0.2]
-		7 [label="sum
-sig" xlabel=7 color=red fontsize=9 height=0.2 shape=circle width=0.2]
+		3 [label="3
+sum, -5.7
+sig" xlabel=3 color=red fontsize=9 height=0.2 shape=circle width=0.2]
 	}
 }

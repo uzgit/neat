@@ -1,84 +1,85 @@
-from math import *
-from random import *
-import numpy
-
-from globals import *
 from genome import *
 
 class Species:
 
-    def __init__(self, identifier, current_generation, genome):
-
-        assert genome is not None
+    def __init__(self, genome, current_generation, identifier=None):
 
         self.identifier = identifier
+        if self.identifier is None:
+            self.set_identifier()
+
         self.starting_generation = current_generation
 
         self.ancestors = []
-        self.genomes = []
-        self.elites = []
-        self.children = []
+        self.genomes   = []
+        self.elites    = []
+        self.misfits   = []
 
         self.fitness_history = []
         self.fitness = None
         self.champion = deepcopy(genome)
         self.representative = deepcopy(genome)
+        self.genomes.append(genome)
+        self.age = 0
 
+    def set_identifier(self):
+
+        self.identifier = max(global_species_identifiers) + 1
+        global_species_identifiers.append(self.identifier)
+
+    # This function assumes that all genomes have been evaluated.
     def step_generation(self):
 
-        # sort genomes by fitness descending
-        self.genomes.sort(key=lambda genome: genome.fitness, reverse=True)
-        if self.genomes[0].fitness >= self.champion.fitness:
+        assert len(self.genomes) > 0
+
+        # Sort genomes by fitness descending.
+        self.genomes.sort(key = lambda genome : genome.fitness, reverse = True)
+
+        if (self.champion.fitness is None or self.genomes[0].fitness >= self.champion.fitness):
             self.champion = deepcopy(self.genomes[0])
 
-        # update ancestors
-        self.ancestors.clear()
-        for genome in self.genomes:
-            self.ancestors.append(genome)
+        self.fitness = max([genome.fitness for genome in self.genomes])
+        self.fitness_history.append(self.fitness)
 
+        # Set current genomes as ancestors, then clear current genomes.
+        self.ancestors = self.genomes.copy()
+
+        # Choose a random representative from the previous generation
         self.representative = choice(self.ancestors)
 
-        # clear genomes
+        self.age += 1
+
+    # This function assumes that step_generation() has already been called since the last call of reproduce()
+    def reproduce(self, num_children):
+
         self.genomes.clear()
-        # self.misfits.clear()
+        self.misfits.clear()
 
-    def reproduce(self, num_children, next_genome_identifier):
+        num_parents = int(max(2, species_reproduction_elitism * len(self.ancestors)))
+        potential_parents = self.ancestors[0:num_parents]
 
-        assert len(self.ancestors) >= 2
-
-        # Population object will re-add genomes to species
-        self.genomes.clear()
-
-        # we need at least 2 parents, and we can have at most len(self.ancestors) parents
-        num_parents = int(max(2, len(self.ancestors) * reproduction_elitism))
-        if num_parents > len(self.ancestors):
-            num_parents = len(self.ancestors)
-
-        potential_parents = self.ancestors[0 : num_parents]
-
-        # create children
-        self.children.clear()
         for i in range(num_children):
-
-            # randomly choose parents
             parent_1 = choice(potential_parents)
             parent_2 = choice([potential_parent for potential_parent in potential_parents if potential_parent is not parent_1])
 
-            # create a new child
-            child = Genome.crossover(parent_1, parent_2, next_genome_identifier)
-            # child.random_mutation() ##############################################################
+            # print("#"*80)
+            # print(parent_1)
+            # print(parent_2)
+            # print("#" * 80)
+            child = Genome.crossover(parent_1, parent_2)
+            # print(child)
+            child.random_mutation()
 
-            # increment identifier
-            next_genome_identifier += 1
+            if self.is_compatible_with(child):
+                self.genomes.append(child)
+            else:
+                self.misfits.append(child)
 
-            self.children.append(child)
+        assert (len(self.genomes) + len(self.misfits)) == num_children
 
-            # if self.is_compatible_with(child):
-            #     self.genomes.append(child)
-            # else:
-            #     self.misfits.append(child)
+    def is_extinct(self):
 
-        return next_genome_identifier
+        return self.size() < 2
 
     def add_genome(self, genome):
 
@@ -86,45 +87,20 @@ class Species:
 
     def is_compatible_with(self, genome):
 
-        result = None
-
-        if self.representative.similarity(genome) > species_similarity_threshold:
-            result = True
-        else:
-            result = False
-
-        return result
+        return Genome.similarity(self.representative, genome) >= species_similarity_threshold
 
     def is_stagnated(self):
 
         stagnated = False
-
-        if len(self.fitness_history) > stagnation_time:
-
-            fitness_to_beat = self.fitness_history[-stagnation_time]
-            starting_index = -stagnation_time
-
-            improvements = [fitness > fitness_to_beat for fitness in self.fitness_history[starting_index:]]
-
+        if self.age > species_stagnation_time:
+            fitness_to_beat = self.fitness_history[-species_stagnation_time:]
+            improvements = [fitness > fitness_to_beat for fitness in self.fitness_history[-species_stagnation_time:]]
             stagnated = not any(improvements)
-
         return stagnated
-
-    def add_fitness(self, fitness):
-
-        self.fitness = fitness
-        self.fitness_history.append(fitness)
 
     def average_fitness(self):
 
-        if len(self.fitness_history) < species_average_fitness_time:
-
-            fitness_time = len(self.fitness_history)
-
-        else:
-
-            fitness_time = species_average_fitness_time
-
+        fitness_time = min(self.age, species_average_fitness_time)
         return sum(self.fitness_history[-fitness_time:]) / fitness_time
 
     def size(self):
@@ -133,10 +109,10 @@ class Species:
 
     def __str__(self):
 
-        representation = "Species {}, age {} generations, fitness {}.".format(self.identifier, len(self.fitness_history), self.fitness)
-
-        return representation
+        return "Species {}, age: {} generations, fitness: {}".format(self.identifier, self.age, self.fitness)
 
     def information_entry(self):
 
-        return "%6s%6s%10s%15s%15s%10s" % (self.identifier, len(self.fitness_history), len(self.genomes), round(self.average_fitness(), 2), round(self.fitness, 2), round(numpy.std([genome.fitness for genome in self.genomes]), 3))
+        return "%6s%6s%10s%15s%15s%10s" % (
+        self.identifier, self.age, len(self.ancestors), round(self.average_fitness(), 2),
+        round(self.fitness, 2), round(numpy.std([genome.fitness for genome in self.ancestors]), 3))
