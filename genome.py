@@ -238,7 +238,7 @@ class Genome:
         # assert len(used_node_identifiers) <= (genome1.max_num_hidden_nodes + 3), str(genome1) + str(genome2) + str(nodes)
         assert used_node_identifiers.issubset(set([node.identifier for node in nodes]))
 
-        assert len([node for node in nodes if not node.is_input_node and not node.is_output_node and node.is_enabled]) <= genome1.max_num_hidden_nodes, str(genome1) + str(genome2) + str(nodes) + str(edges)
+        # assert len([node for node in nodes if not node.is_input_node and not node.is_output_node and node.is_enabled]) <= genome1.max_num_hidden_nodes, str(genome1) + str(genome2) + str(nodes) + str(edges)
 
         child = Genome(num_inputs=genome1.num_inputs, num_outputs=genome1.num_outputs, nodes=nodes, max_num_hidden_nodes=better_parent.max_num_hidden_nodes)
         # assert child.num_hidden_nodes() < child.max_num_hidden_nodes

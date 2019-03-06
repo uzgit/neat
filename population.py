@@ -81,6 +81,19 @@ class Population:
 
         return self.champion
 
+    def run_skeleton(self, evaluation_function, num_generations=None, fitness_goal=None):
+
+        while( self.continue_run(num_generations=num_generations, fitness_goal=fitness_goal) ):
+
+            self.pre_evaluation_tasks()
+
+            for neural_network in self.neural_networks:
+                neural_network.genome.fitness = evaluation_function(neural_network)
+
+            self.post_evaluation_tasks()
+
+        return self.champion
+
     def pre_evaluation_tasks(self):
 
         if self.output_stream is not None:
@@ -106,6 +119,16 @@ class Population:
         self.set_neural_networks()
 
         self.generation += 1
+
+    def continue_run(self, num_generations=None, fitness_goal=None):
+
+        if num_generations is None and fitness_goal is None:
+            num_generations = self.num_generations
+        elif fitness_goal is not None:
+            self.fitness_goal = fitness_goal
+        assert not (num_generations is None and fitness_goal is None)
+
+        return (num_generations is None or self.generation <= num_generations) and (fitness_goal is None or (self.champion is None or self.champion.fitness < fitness_goal))
 
     def set_neural_networks(self):
 
