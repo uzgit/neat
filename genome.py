@@ -1,6 +1,12 @@
 from copy import deepcopy
 from random import *
 import pickle
+import os
+import sys
+
+# For use in contexts where this file is imported from outside this directory.
+file_dir = os.path.dirname(__file__)
+sys.path.append(file_dir)
 
 from functions import *
 from globals import *
