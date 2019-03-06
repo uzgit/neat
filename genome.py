@@ -234,21 +234,9 @@ class Genome:
             else:
                 nodes.append(node)
 
-        # node_identifiers = [node.identifier for node in nodes]
-        # for node_identifier in used_node_identifiers:
-        #     if node_identifier not in node_identifiers:
-        #
-        #         if node_identifier in better_parent_nodes:
-        #             nodes.append(better_parent_nodes[node_identifier])
-        #             print("added node {} from better parent")
-        #         elif node.identifier in worse_parent_nodes:
-        #             nodes.append(worse_parent_nodes[node_identifier])
-        #         else:
-        #             raise RuntimeError
-
         assert used_node_identifiers.issubset(set([node.identifier for node in nodes]))
 
-        child = Genome(num_inputs=genome1.num_inputs, num_outputs=genome1.num_outputs, nodes=nodes)
+        child = Genome(num_inputs=genome1.num_inputs, num_outputs=genome1.num_outputs, nodes=nodes, max_num_hidden_nodes=better_parent.max_num_hidden_nodes)
         for edge in edges:
             child.add_edge(edge)
 
@@ -287,27 +275,26 @@ class Genome:
         # We cannot add a node to the Genome if we have already reached the maximum number of hidden nodes, or if there
         # are no edges to split.
         if self.num_edges() == 0 or (self.max_num_hidden_nodes is not None and self.num_hidden_nodes() >= self.max_num_hidden_nodes):
-            theoretically_possible_mutations.pop(Genome.mutate_add_node)
-            # print("removing add node")
+            theoretically_possible_mutations.pop(Genome.mutate_add_node, None)
 
         # We cannot modify nodes if we have 0 hidden nodes.
         if self.num_hidden_nodes() == 0:
-            # print("removing remove node")
-            theoretically_possible_mutations.pop(Genome.mutate_remove_node)
-            theoretically_possible_mutations.pop(Genome.mutate_change_aggregation_function)
-            theoretically_possible_mutations.pop(Genome.mutate_change_activation_function)
-
-            # theoretically_possible_mutations.pop(Genome.mutate_perturb_bias)
+            theoretically_possible_mutations.pop(Genome.mutate_remove_node, None)
+            theoretically_possible_mutations.pop(Genome.mutate_change_aggregation_function, None)
+            theoretically_possible_mutations.pop(Genome.mutate_change_activation_function, None)
+            # It is always possible to perturb a bias because output biases can be perturbed and output nodes
+            # always exist.
+            # theoretically_possible_mutations.pop(Genome.mutate_perturb_bias, None)
 
         # We cannot add an edge if the graph is fully connected, or if the addition of any new edge would result
         # in a cycle, since we are using only feed-forward networks.
         if self.get_possible_edge() == None:
-            theoretically_possible_mutations.pop(Genome.mutate_add_edge)
+            theoretically_possible_mutations.pop(Genome.mutate_add_edge, None)
 
         # We cannot modify an edge if the Genome contains no edges.
         if self.num_edges() == 0:
-            theoretically_possible_mutations.pop(Genome.mutate_remove_edge)
-            theoretically_possible_mutations.pop(Genome.mutate_perturb_weight)
+            theoretically_possible_mutations.pop(Genome.mutate_remove_edge, None)
+            theoretically_possible_mutations.pop(Genome.mutate_perturb_weight, None)
 
         # Ensure that the random number is greater than the probability of at least one of the mutations.
         # This way we know that at least one mutation is guaranteed to happen.
@@ -320,6 +307,9 @@ class Genome:
         # Choose a random element from the possible mutations and carry it out.
         mutation = choice(possible_mutations)
         mutation(self)
+
+        if mutation is Genome.add_node:
+            print("#" * 80)
 
     # Adds a random enabled node to the Genome.
     def mutate_add_node(self):
@@ -396,6 +386,7 @@ class Genome:
     def add_node(self, node):
 
         assert node is not None
+        assert self.num_hidden_nodes() < self.max_num_hidden_nodes
         assert node.identifier not in [node.identifier for node in self.nodes]
         self.nodes.append(node)
 

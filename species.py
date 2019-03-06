@@ -62,12 +62,7 @@ class Species:
             parent_1 = choice(potential_parents)
             parent_2 = choice([potential_parent for potential_parent in potential_parents if potential_parent is not parent_1])
 
-            # print("#"*80)
-            # print(parent_1)
-            # print(parent_2)
-            # print("#" * 80)
             child = Genome.crossover(parent_1, parent_2)
-            # print(child)
             child.random_mutation()
 
             if self.is_compatible_with(child):

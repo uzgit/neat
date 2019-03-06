@@ -12,16 +12,12 @@ global_bias_min = -20
 global_bias_max = 20
 
 # general variables for edges
-global_weight_min = -30
-global_weight_max = 30
+global_weight_min = -10
+global_weight_max = 10
 
 # variables for mutating edges with Genome.mutate_add_edge
 initial_weight_min = -2
 initial_weight_max = 2
-
-# variables for mutating edges with Genome.mutate_scale_weight
-global_weight_min = -20
-global_weight_max = 20
 
 # variables for NodeGenes
 # default_aggregation_function = "sum"
@@ -44,7 +40,7 @@ default_genome_mode = "unconnected"
 # default_genome_mode = "fully connected"
 
 # variables for comparing genomes
-node_gene_similarity_measure = 0.7
+node_gene_similarity_measure = 0.8
 node_bias_similarity_measure = 0
 node_aggregation_function_similarity_measure = 0
 node_activation_function_similarity_measure  = 0

@@ -67,7 +67,7 @@ class Population:
             self.fitness_goal = fitness_goal
         assert not (num_generations is None and fitness_goal is None)
 
-        while (num_generations is not None and self.generation <= num_generations) or (fitness_goal is not None and self.champion.fitness < fitness_goal):
+        while (num_generations is None or self.generation <= num_generations) and (fitness_goal is None or (self.champion is None or self.champion.fitness < fitness_goal)):
 
             # Stuff to do before evaluation.
             self.pre_evaluation_tasks()

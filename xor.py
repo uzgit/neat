@@ -121,4 +121,6 @@ def test_xor_sigmoid_print(neural_network):
         else:
             fitness -= (network_output[0] - true_output[0]) ** 2
 
+    print("Fitness: {}".format(fitness))
+
     return fitness
