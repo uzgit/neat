@@ -562,6 +562,16 @@ class Genome:
 
         return max([edge.identifier for edge in self.edges] + [0]) + 1
 
+    def save(self, filename):
+
+        file = open(filename, "wb")
+        pickle.dump(self, file, protocol=-1)
+
+    @classmethod
+    def from_file(cls, filename):
+        file = open(filename, "rb")
+        return pickle.load(file)
+
     def __str__(self):
 
         representation = "Genome {}, fitness {}:\n".format(self.identifier, self.fitness)

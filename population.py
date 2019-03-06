@@ -118,6 +118,8 @@ class Population:
 
         self.set_neural_networks()
 
+        self.champion.save("champion.genome")
+
         self.generation += 1
 
     def continue_run(self, num_generations=None, fitness_goal=None):
