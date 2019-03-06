@@ -1,4 +1,4 @@
-# NEAT Neural Networks
+# NEAT
 
 This repository contains a feed-forward implementation of the NEAT (Neuro Evolution of Augmenting Topologies) algorithm. It also contains methods for visualizing the networks. This is based on the [python-neat](https://github.com/CodeReclaimers/neat-python) code.
 
