@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import *
 
 # For use in contexts where this file is imported from outside this directory.
 file_dir = os.path.dirname(__file__)
@@ -33,6 +34,8 @@ class Population:
 
         self.champion = None
         self.generation_champion = None
+        self.generation_start_time = None
+        self.generation_end_time = None
 
         self.initialize()
         self.initial_mutation()
@@ -104,12 +107,16 @@ class Population:
         if self.output_stream is not None:
             print("Beginning generation {} with {} individuals of {} species.".format(self.generation, len(self.genomes), len(self.species)))
 
+        self.generation_start_time = datetime.now()
+
     def post_evaluation_tasks(self):
 
         self.set_champions()
 
         for species in self.species:
             species.step_generation()
+
+        self.generation_end_time = datetime.now()
 
         if self.output_stream is not None:
             self.report_generation()
@@ -155,13 +162,15 @@ class Population:
         print(file=self.output_stream)
         for species in self.species:
             print(species.information_entry(), file=self.output_stream)
+
+        print("Best genome in generation {}: genome {}, fitness: {}".format(self.generation, self.generation_champion.identifier, round(self.generation_champion.fitness, 2)), file=self.output_stream, end="\n")
         print("Best genome so far: {}, fitness: {}".format(self.champion.identifier, round(self.champion.fitness, 2)),
               end="")
         if self.fitness_goal is not None:
             print(" ({}% of {} goal)".format(round(100 * float(self.champion.fitness) / self.fitness_goal, 2), self.fitness_goal))
         else:
             print()
-        print("Best genome in generation {}: genome {}, fitness: {}".format(self.generation, self.generation_champion.identifier, round(self.generation_champion.fitness, 2)), file=self.output_stream, end="\n\n")
+        print("Processing time for generation {}: {}s".format(self.generation, round((self.generation_end_time - self.generation_start_time).total_seconds(), 2)), end="\n\n")
 
     def reproduce(self):
 
