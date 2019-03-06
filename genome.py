@@ -5,6 +5,8 @@ import pickle
 from functions import *
 from globals import *
 
+# from visualize import draw_genome_full
+
 class NodeGene:
 
     def __init__(self, identifier, aggregation_function=default_aggregation_function, bias=None, activation_function=default_activation_function, is_input_node=False, is_output_node=False, is_enabled=True):
@@ -165,7 +167,6 @@ class Genome:
                         else:
                             weight = 1
 
-                        # input_node_identifier, output_node_identifier, identifier=None, innovation_number=None, weight=None, is_enabled=True, genome=None):
                         genome.add_edge( EdgeGene(input_node.identifier, hidden_node.identifier, weight=weight, identifier=genome.next_edge_identifier()) )
 
                 for hidden_node in hidden_nodes:
@@ -234,9 +235,13 @@ class Genome:
             else:
                 nodes.append(node)
 
+        # assert len(used_node_identifiers) <= (genome1.max_num_hidden_nodes + 3), str(genome1) + str(genome2) + str(nodes)
         assert used_node_identifiers.issubset(set([node.identifier for node in nodes]))
 
+        assert len([node for node in nodes if not node.is_input_node and not node.is_output_node and node.is_enabled]) <= genome1.max_num_hidden_nodes, str(genome1) + str(genome2) + str(nodes) + str(edges)
+
         child = Genome(num_inputs=genome1.num_inputs, num_outputs=genome1.num_outputs, nodes=nodes, max_num_hidden_nodes=better_parent.max_num_hidden_nodes)
+        # assert child.num_hidden_nodes() < child.max_num_hidden_nodes
         for edge in edges:
             child.add_edge(edge)
 
@@ -307,9 +312,6 @@ class Genome:
         # Choose a random element from the possible mutations and carry it out.
         mutation = choice(possible_mutations)
         mutation(self)
-
-        if mutation is Genome.add_node:
-            print("#" * 80)
 
     # Adds a random enabled node to the Genome.
     def mutate_add_node(self):
@@ -395,7 +397,6 @@ class Genome:
     def get_possible_node(self):
 
         new_node = None
-
         if self.max_num_hidden_nodes is None or self.num_hidden_nodes() < self.max_num_hidden_nodes:
             new_node = NodeGene(self.next_node_identifier())
         return new_node
