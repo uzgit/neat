@@ -100,10 +100,18 @@ class Species:
             stagnated = not any(improvements)
         return stagnated
 
-    def average_fitness(self):
+    def temporal_average_fitness(self):
 
         fitness_time = min(self.age, species_average_fitness_time)
         return sum(self.fitness_history[-fitness_time:]) / fitness_time
+
+    def average_fitness_of_ancestors(self):
+
+        return sum([genome.fitness for genome in self.ancestors]) / len(self.genomes)
+
+    def average_fitness(self):
+
+        return self.average_fitness_of_ancestors()
 
     def size(self):
 
@@ -115,6 +123,5 @@ class Species:
 
     def information_entry(self):
 
-        return "%6s%6s%10s%15s%15s%10s" % (
-        self.identifier, self.age, len(self.ancestors), round(self.average_fitness(), 2),
-        round(self.fitness, 2), round(numpy.std([genome.fitness for genome in self.ancestors]), 3))
+        return "%6s%6s%10s%15.2f%15.2f%13.2f" % (self.identifier, self.age, len(self.ancestors), self.fitness, self.average_fitness(), numpy.std([genome.fitness for genome in self.ancestors]))
+        # return "%6s%6s%10s%15s%15s%13s" % (self.identifier, self.age, len(self.ancestors), round(self.fitness, 2), round(self.average_fitness(), 2), round(numpy.std([genome.fitness for genome in self.ancestors]), 3))

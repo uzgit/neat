@@ -158,12 +158,12 @@ class Population:
 
     def report_generation(self):
 
-        for i in range(6 + 6 + 10 + 15 + 15 + 10):
+        for i in range(65):
             print("-", end="", file=self.output_stream)
         print(file=self.output_stream)
-        print("%-6s%6s%10s%14s%14s%10s" % ("Species", "Age", "Members", "Ave Fitness", "Fitness", "Std Dev"),
+        print("%-6s%5s%10s%15s%15s%13s" % ("Species", "Age", "Members", "Best Fitness", "Ave Fitness", "Std Dev"),
               file=self.output_stream)
-        for i in range(6 + 6 + 10 + 15 + 15 + 10):
+        for i in range(65):
             print("-", end="", file=self.output_stream)
         print(file=self.output_stream)
         for species in self.species:
