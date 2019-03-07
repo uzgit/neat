@@ -1,6 +1,7 @@
 import os
 import sys
 from datetime import *
+import pickle
 
 # For use in contexts where this file is imported from outside this directory.
 file_dir = os.path.dirname(__file__)
@@ -11,7 +12,7 @@ from neural_network import *
 
 class Population:
 
-    def __init__(self, num_inputs, num_outputs, initial_num_hidden_nodes=0, max_num_hidden_nodes=default_max_num_hidden_nodes, output_activation_function=default_output_activation_function, mode="unconnected", population_size=default_population_size, num_initial_mutations=1, num_generations=None, output_stream=sys.stdout):
+    def __init__(self, num_inputs, num_outputs, initial_num_hidden_nodes=0, max_num_hidden_nodes=default_max_num_hidden_nodes, output_activation_function=default_output_activation_function, mode="unconnected", population_size=default_population_size, num_initial_mutations=1, num_generations=None, output_stream_name="sys.stdout"):
 
         self.population_size = population_size
         self.num_inputs = num_inputs
@@ -21,7 +22,10 @@ class Population:
         self.output_activation_function = output_activation_function
         self.num_initial_mutations = num_initial_mutations
         self.num_generations = num_generations
-        self.output_stream = output_stream
+
+        self.output_stream_name = output_stream_name
+        self.output_stream = eval(self.output_stream_name)
+
         self.mode = mode
 
         self.fitness_goal = None
@@ -105,7 +109,7 @@ class Population:
     def pre_evaluation_tasks(self):
 
         if self.output_stream is not None:
-            print("Beginning generation {} with {} individuals of {} species.".format(self.generation, len(self.genomes), len(self.species)))
+            print("Beginning generation {} with {} individuals of {} species.".format(self.generation, len(self.genomes), len(self.species)), file=self.output_stream)
 
         self.generation_start_time = datetime.now()
 
@@ -169,10 +173,10 @@ class Population:
         print("Best genome so far: {}, fitness: {}".format(self.champion.identifier, round(self.champion.fitness, 2)),
               end="")
         if self.fitness_goal is not None:
-            print(" ({}% of {} goal)".format(round(100 * float(self.champion.fitness) / self.fitness_goal, 2), self.fitness_goal))
+            print(" ({}% of {} goal)".format(round(100 * float(self.champion.fitness) / self.fitness_goal, 2), self.fitness_goal), file=self.output_stream)
         else:
             print()
-        print("Processing time for generation {}: {}s".format(self.generation, round((self.generation_end_time - self.generation_start_time).total_seconds(), 2)), end="\n\n")
+        print("Processing time for generation {}: {}s".format(self.generation, round((self.generation_end_time - self.generation_start_time).total_seconds(), 2)), end="\n\n", file=self.output_stream)
 
     def reproduce(self):
 
@@ -253,6 +257,25 @@ class Population:
     def num_species(self):
 
         return len(self.species)
+
+    def save(self, filename):
+
+        # Output streams are not serializable.
+        duplicate = deepcopy(self)
+        duplicate.output_stream = duplicate.output_stream_name
+
+        file = open(filename, "wb")
+        pickle.dump(duplicate, file, protocol=-1)
+        file.close()
+
+    @classmethod
+    def from_file(cls, filename):
+
+        file = open(filename, "rb")
+        population = pickle.load(file)
+        file.close()
+        population.output_stream = eval(population.output_stream)
+        return population
 
     def __str__(self):
 
