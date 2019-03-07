@@ -1,0 +1,30 @@
+digraph {
+	1 -> 3 [color=grey fontsize=9 label=-0.05 style=solid]
+	2 -> 3 [color=black fontsize=9 label=0.05 style=solid]
+	1 -> 4 [color=black fontsize=9 label=4.09 style=solid]
+	4 -> 3 [color=black fontsize=9 label=1.31 style=solid]
+	2 -> 4 [color=grey fontsize=9 label=-8.47 style=solid]
+	1 -> 4 [arrowhead=none style=invisible]
+	2 -> 4 [arrowhead=none style=invisible]
+	4 -> 3 [arrowhead=none style=invisible]
+	subgraph "input nodes" {
+		graph [rank=min]
+		1 [label="1
+sum, None
+id" xlabel=1 color=red fontsize=9 height=0.2 shape=circle width=0.2]
+		2 [label="1
+sum, None
+id" xlabel=2 color=red fontsize=9 height=0.2 shape=circle width=0.2]
+	}
+	subgraph "hidden nodes" {
+		4 [label="2
+ave, -2.4
+step" xlabel=4 fontsize=9 height=0.2 shape=circle width=0.2]
+	}
+	subgraph "output nodes" {
+		graph [rank=max]
+		3 [label="3
+sum, None
+sig" xlabel=3 color=red fontsize=9 height=0.2 shape=circle width=0.2]
+	}
+}
