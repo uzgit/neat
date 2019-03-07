@@ -183,7 +183,7 @@ class Population:
         self.set_total_fitness()
         for species in self.species:
 
-            num_children = int(self.population_size * species.fitness / self.total_fitness)
+            num_children = int(self.population_size * species.average_fitness() / self.total_fitness)
             species.reproduce(num_children)
 
     def transfer_offspring(self):
