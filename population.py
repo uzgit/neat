@@ -134,6 +134,8 @@ class Population:
 
         self.generation += 1
 
+        return self.champion, self.generation_champion
+
     def continue_run(self, num_generations=None, fitness_goal=None):
 
         if num_generations is None and fitness_goal is None:
