@@ -271,7 +271,7 @@ class Population:
         self.output_stream = self.output_stream_name
 
         file = open(filename, "wb")
-        pickle.dump(self, file, protocol=-1)
+        pickle.dump(self, file, protocol=1)
         file.close()
 
         self.output_stream = eval(self.output_stream_name)
@@ -285,6 +285,21 @@ class Population:
         
         population.output_stream = eval(population.output_stream)
         return population
+
+    def save_run_data(self, filename="population_{}_gen{}.data"):
+
+        file = open(filename, "wb")
+        pickle.dump(self.genome_fitnesses, file, protocol=1)
+        file.close()
+
+    @classmethod
+    def load_run_data(cls, filename):
+
+        file = open(filename, "rb")
+        run_data = pickle.load(file)
+        file.close()
+
+        return run_data
 
     def __str__(self):
 
