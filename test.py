@@ -122,11 +122,18 @@ from xor import *
 # draw_neural_network_full(network3, "images/network3")
 
 population = Population(num_inputs=2, num_outputs=1, initial_num_hidden_nodes=0, max_num_hidden_nodes=1, output_activation_function=sigmoid, population_size=150, num_initial_mutations=1)
-champion = population.run_skeleton(evaluation_function=test_xor_sigmoid, fitness_goal=3.995)#, num_generations=100)
-network = FeedForwardNeuralNetwork(champion)
-draw_neural_network_full(network)
-test_xor_sigmoid_print(network)
-print("max num hidden nodes in population: {}".format(max([genome.num_hidden_nodes() for genome in population.genomes])))
+champion = population.run_skeleton(evaluation_function=test_xor_sigmoid, fitness_goal=3.999)#, num_generations=100)
+population.save("save_test.population")
+# population2 = Population.from_file("save_test.population")
+
+# print(population2.champion)
+# input()
+# population2.run_skeleton(evaluation_function=test_xor_sigmoid, fitness_goal=3.98)#, num_generations=100)
+
+# network = FeedForwardNeuralNetwork(champion)
+# draw_neural_network_full(network)
+# test_xor_sigmoid_print(network)
+# print("max num hidden nodes in population: {}".format(max([genome.num_hidden_nodes() for genome in population.genomes])))
 
 # population = Population.from_file("save_test.population")
 # champion = population.run_skeleton(evaluation_function=test_xor_sigmoid, fitness_goal=3.99)#, num_generations=100)

@@ -41,6 +41,8 @@ class Population:
         self.generation_start_time = None
         self.generation_end_time = None
 
+        self.genome_fitnesses = None
+
         self.initialize()
         self.initial_mutation()
         self.set_species()
@@ -52,6 +54,8 @@ class Population:
         self.species = []
         self.misfits = []
         self.neural_networks = []
+
+        self.genome_fitnesses = []
 
         for i in range(self.population_size):
 
@@ -114,6 +118,8 @@ class Population:
         self.generation_start_time = datetime.now()
 
     def post_evaluation_tasks(self):
+
+        self.genome_fitnesses += [[genome.fitness for genome in self.genomes]]
 
         self.set_champions()
 
@@ -183,7 +189,7 @@ class Population:
         self.set_total_fitness()
         for species in self.species:
 
-            num_children = int(self.population_size * species.average_fitness() / self.total_fitness)
+            num_children = int(round((self.population_size * species.average_fitness() / self.total_fitness), 0))
             species.reproduce(num_children)
 
     def transfer_offspring(self):
@@ -261,12 +267,14 @@ class Population:
     def save(self, filename):
 
         # Output streams are not serializable.
-        duplicate = deepcopy(self)
-        duplicate.output_stream = duplicate.output_stream_name
+
+        self.output_stream = self.output_stream_name
 
         file = open(filename, "wb")
-        pickle.dump(duplicate, file, protocol=-1)
+        pickle.dump(self, file, protocol=-1)
         file.close()
+
+        self.output_stream = eval(self.output_stream_name)
 
     @classmethod
     def from_file(cls, filename):
