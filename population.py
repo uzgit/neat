@@ -274,6 +274,7 @@ class Population:
         file = open(filename, "rb")
         population = pickle.load(file)
         file.close()
+        
         population.output_stream = eval(population.output_stream)
         return population
 
