@@ -33,9 +33,9 @@ regression_function = numpy.poly1d( numpy.polyfit(x=range(1, len(list_for_regres
 regression_points = regression_function( range(len(run_data)) )
 
 plt.plot(generation_best_fitnesses, label="Best Fitness")
-plt.plot(generation_elite_average_fitnesses, label="Elite ({}%) Average Fitness".format(portion_elites * 100))
+plt.plot(generation_elite_average_fitnesses, label="Elite (Top {}%) Average Fitness".format(portion_elites * 100))
+plt.plot(regression_points, label="Elite Fitness Regression (Degree {})".format(regression_degree), linestyle="dashed")
 plt.plot(generation_average_fitnesses, label="Average Fitness")
-plt.plot(regression_points, label="Average Fitness Regression ({})".format(regression_degree), linestyle="dashed")
 
 plt.legend(loc="upper left")
 plt.xlabel("Generation")

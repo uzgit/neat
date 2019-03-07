@@ -1,6 +1,7 @@
 Digraph.gv
 Digraph.gv.svg
 neat-checkpoint-*
+*.data
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
