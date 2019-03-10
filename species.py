@@ -65,7 +65,15 @@ class Species:
         num_parents = int(max(2, species_reproduction_elitism * len(self.ancestors)))
         potential_parents = self.ancestors[0:num_parents]
 
-        for i in range(num_children):
+        # Elitism, ensuring that at least two children are included from actual reproduction
+        num_elites = min(int(species_elitism * num_children), len(potential_parents)) if num_children > 2 else 0
+        for i in range(num_elites):
+            if self.is_compatible_with(potential_parents[i]):
+                self.genomes.append(potential_parents[i])
+            else:
+                self.misfits.append(potential_parents[i])
+
+        for i in range(num_children - num_elites):
             parent_1 = choice(potential_parents)
             parent_2 = choice([potential_parent for potential_parent in potential_parents if potential_parent is not parent_1])
 

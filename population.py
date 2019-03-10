@@ -187,10 +187,42 @@ class Population:
     def reproduce(self):
 
         self.set_total_fitness()
-        for species in self.species:
 
-            num_children = int(round((self.population_size * species.average_fitness() / self.total_fitness), 0))
-            species.reproduce(num_children)
+        self.species.sort(key=lambda species : species.fitness, reverse=True)
+
+        if exact_population_size:
+
+            num_children = {}
+            for species in self.species:
+                num_children.update( {species : int(round((self.population_size * species.average_fitness() / self.total_fitness), 0)) } )
+
+            # correct potential error in number of children requested
+            raw_num_children = sum(num_children.values())
+            error = raw_num_children - self.population_size
+            delta = 0
+            if error > 0:
+                delta = -1
+            elif error < 0:
+                delta = 1
+
+            while error is not 0:
+                max_num_children = max(num_children[species] for species in self.species)
+                most_populated_species = [species for species in self.species if num_children[species] is max_num_children]
+                most_populated_species.sort(key=lambda species : species.fitness)
+
+                for i in range(min(abs(error), len(most_populated_species))):
+                    species = most_populated_species[i]
+                    num_children[species] += delta
+                    error += delta
+            assert sum(num_children.values()) == 150, "Number of children requested: {}.".format(sum(num_children.values()))
+
+            for species in self.species:
+                species.reproduce(num_children[species])
+
+        else:
+            for species in self.species:
+                num_children = int(round((self.population_size * species.average_fitness() / self.total_fitness), 0))
+                species.reproduce(num_children)
 
     def transfer_offspring(self):
 

@@ -71,7 +71,7 @@ mutate_change_activation_function_probability = 0.05
 # variables for Species
 species_similarity_threshold = 0.6
 species_stagnation_time = 2000 # number of generations without fitness improvement before a species is considered stagnant
-species_elitism = 0 # doesn't work yet
+species_elitism = 0.1 # this proportion of the number of children will be the elites from the previous generation
 species_reproduction_elitism = 0.4 # percentage of individuals who will reproduce to create the next generation of the species
 species_average_fitness_time = 20 # number of generations over which to calculate average fitness
 
@@ -79,6 +79,12 @@ species_average_fitness_time = 20 # number of generations over which to calculat
 default_population_size = 150
 default_max_num_hidden_nodes = 15
 default_num_initial_mutations = 1
+
+# Set to True if the population size must be exactly equal to the size set by the user. The actual population size
+# varies throughout execution in order to maintain a per-species population of at least 2, which is necessary for
+# reproduction. This is for use in comparing this algorithm to other algorithms with respect to performance after
+# the evaluation of a certain number of genomes.
+exact_population_size = True
 
 ########################################################################################################################
 # the following are critical variables for NEAT, so it's best not to touch them, but you should definitely touch them
