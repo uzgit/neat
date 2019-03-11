@@ -60,7 +60,7 @@ mutate_add_node_probability = 0.2
 mutate_remove_node_probability = 0.1
 mutate_perturb_bias_probability = 0.2
 mutate_set_bias_probability = 0.2
-mutate_add_edge_probability = 0.8
+mutate_add_edge_probability = 0.6
 mutate_remove_edge_probability = 0.4
 mutate_reset_weight_probability = 0.2
 mutate_scale_weight_probability = 0.2
@@ -69,7 +69,7 @@ mutate_change_aggregation_function_probability = 0.05
 mutate_change_activation_function_probability = 0.05
 
 # variables for Species
-species_similarity_threshold = 0.6
+species_similarity_threshold = 0.75
 species_stagnation_time = 2000 # number of generations without fitness improvement before a species is considered stagnant
 species_elitism = 0.1 # this proportion of the number of children will be the elites from the previous generation
 species_reproduction_elitism = 0.4 # percentage of individuals who will reproduce to create the next generation of the species
